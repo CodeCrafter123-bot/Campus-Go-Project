@@ -1,5 +1,7 @@
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { colors } from "../theme/colors";
+import CartHeaderButton from "../components/CartHeaderButton";
+import { getStoreById, getProductById } from "../data";
 
 import HomeScreen from "../screens/home/HomeScreen";
 import StoreMenuScreen from "../screens/home/StoreMenuScreen";
@@ -23,9 +25,27 @@ const HomeStackNav = createNativeStackNavigator();
 export function HomeStack() {
   return (
     <HomeStackNav.Navigator screenOptions={stackScreenOptions}>
-      <HomeStackNav.Screen name="Home" component={HomeScreen} options={{ title: "CampusGo" }} />
-      <HomeStackNav.Screen name="StoreMenu" component={StoreMenuScreen} options={{ title: "Menu" }} />
-      <HomeStackNav.Screen name="ProductDetails" component={ProductDetailsScreen} options={{ title: "Product" }} />
+      <HomeStackNav.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{ title: "CampusGo", headerRight: () => <CartHeaderButton /> }}
+      />
+      <HomeStackNav.Screen
+        name="StoreMenu"
+        component={StoreMenuScreen}
+        options={({ route }) => ({
+          title: getStoreById(route.params?.storeId)?.name ?? "Menu",
+          headerRight: () => <CartHeaderButton />,
+        })}
+      />
+      <HomeStackNav.Screen
+        name="ProductDetails"
+        component={ProductDetailsScreen}
+        options={({ route }) => ({
+          title: getProductById(route.params?.productId)?.name ?? "Product",
+          headerRight: () => <CartHeaderButton />,
+        })}
+      />
     </HomeStackNav.Navigator>
   );
 }
