@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, FlatList, Alert, StyleSheet } from "react-native";
+import { View, Text, FlatList, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import StatusTimeline from "../../components/StatusTimeline";
 import StarRating from "../../components/StarRating";
@@ -10,6 +10,7 @@ import { useOrders, STATUS_LABELS } from "../../context/OrdersContext";
 import { formatPrice, round2 } from "../../utils/pricing";
 import { describeItem, formatDateTime, locationLabel } from "../../utils/format";
 import { colors, radius, spacing } from "../../theme/colors";
+import { showAlert } from "../../utils/dialog";
 
 // Simulation: how long each status lasts before moving to the next one.
 // "received" is a bit longer so there is time to demo the Cancel button.
@@ -53,7 +54,7 @@ export default function OrderTrackingScreen({ navigation, route }) {
   const isDelivered = order.status === "delivered";
 
   const handleCancel = () =>
-    Alert.alert(
+    showAlert(
       "Cancel this order?",
       order.paymentMethod === "wallet" ? `${formatPrice(order.total)} will be refunded to your wallet.` : undefined,
       [
@@ -63,7 +64,7 @@ export default function OrderTrackingScreen({ navigation, route }) {
           style: "destructive",
           onPress: () => {
             const { error } = cancelOrder(order.id);
-            if (error) Alert.alert("Too late", error);
+            if (error) showAlert("Too late", error);
           },
         },
       ]

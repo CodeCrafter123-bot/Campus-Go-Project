@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { View, Text, FlatList, Pressable, Switch, Alert, StyleSheet } from "react-native";
+import { View, Text, FlatList, Pressable, Switch, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import FormContainer from "../../components/FormContainer";
 import TextField from "../../components/TextField";
@@ -18,6 +18,7 @@ import { locationLabel } from "../../utils/format";
 import { validateRoom } from "../../utils/validation";
 import useNow from "../../utils/useNow";
 import { colors, radius, spacing } from "../../theme/colors";
+import { showAlert } from "../../utils/dialog";
 
 export default function CheckoutScreen({ navigation }) {
   const { user, addLocation } = useAuth();
@@ -91,7 +92,7 @@ export default function CheckoutScreen({ navigation }) {
     const { order, error } = placeOrder({ buildingId, room, slot: selectedSlot, paymentMethod });
     setPlacing(false);
     if (error) {
-      Alert.alert("Order refused", error);
+      showAlert("Order refused", error);
       return;
     }
     if (saveLocation) addLocation({ label: locationName.trim(), buildingId, room: room.trim() });
@@ -108,13 +109,13 @@ export default function CheckoutScreen({ navigation }) {
   const handleConfirm = () => {
     if (!validate()) return;
     if (walletShort) {
-      Alert.alert(
+      showAlert(
         "Insufficient balance",
         `Your wallet has ${formatPrice(wallet.balance)} but the total is ${formatPrice(totals.total)}.\nTop up your wallet or pay cash on delivery.`
       );
       return;
     }
-    Alert.alert(
+    showAlert(
       "Confirm your order",
       `${cart.itemCount} item(s) from ${store.name}\n` +
         `Deliver to: ${locationLabel(buildingId, room.trim())}\n` +

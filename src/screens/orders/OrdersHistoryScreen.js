@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, FlatList, Pressable, Alert, StyleSheet } from "react-native";
+import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import Chip from "../../components/Chip";
 import EmptyState from "../../components/EmptyState";
@@ -10,6 +10,7 @@ import { stores, getStoreById, getProductById } from "../../data";
 import { formatPrice } from "../../utils/pricing";
 import { formatDateTime, locationLabel } from "../../utils/format";
 import { colors, radius, spacing } from "../../theme/colors";
+import { showAlert } from "../../utils/dialog";
 
 const STATUS_FILTERS = [
   { value: "all", label: "All" },
@@ -48,20 +49,20 @@ export default function OrdersHistoryScreen({ navigation }) {
     const skipped = order.items.length - available.length;
 
     if (available.length === 0) {
-      Alert.alert("Cannot reorder", "None of these products are available right now.");
+      showAlert("Cannot reorder", "None of these products are available right now.");
       return;
     }
 
     const doReorder = () => {
       cart.replaceCart(order.storeId, available);
       if (skipped > 0) {
-        Alert.alert("Some items skipped", `${skipped} product(s) are out of stock and were not added.`);
+        showAlert("Some items skipped", `${skipped} product(s) are out of stock and were not added.`);
       }
       navigation.navigate("CartTab", { screen: "Cart" });
     };
 
     if (cart.items.length > 0) {
-      Alert.alert("Replace your cart?", "Your current cart will be emptied and replaced with this order.", [
+      showAlert("Replace your cart?", "Your current cart will be emptied and replaced with this order.", [
         { text: "Cancel", style: "cancel" },
         { text: "Replace", style: "destructive", onPress: doReorder },
       ]);

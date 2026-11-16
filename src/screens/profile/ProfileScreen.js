@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, FlatList, Pressable, Alert, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { View, Text, FlatList, Pressable, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import TextField from "../../components/TextField";
 import Button from "../../components/Button";
@@ -12,6 +12,7 @@ import { formatPrice } from "../../utils/pricing";
 import { locationLabel } from "../../utils/format";
 import { validateRoom, validateRequired } from "../../utils/validation";
 import { colors, radius, spacing } from "../../theme/colors";
+import { showAlert } from "../../utils/dialog";
 
 const EMPTY_LOCATION = { label: "", buildingId: null, room: "" };
 
@@ -49,13 +50,13 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const confirmRemove = (loc) =>
-    Alert.alert("Remove location?", `${loc.label} – ${locationLabel(loc.buildingId, loc.room)}`, [
+    showAlert("Remove location?", `${loc.label} – ${locationLabel(loc.buildingId, loc.room)}`, [
       { text: "Cancel", style: "cancel" },
       { text: "Remove", style: "destructive", onPress: () => removeLocation(loc.id) },
     ]);
 
   const confirmLogout = () =>
-    Alert.alert("Log out?", "Your cart and orders stay saved on this phone.", [
+    showAlert("Log out?", "Your cart and orders stay saved on this phone.", [
       { text: "Cancel", style: "cancel" },
       { text: "Log out", style: "destructive", onPress: logout },
     ]);

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, FlatList, Alert, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { View, Text, FlatList, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import TextField from "../../components/TextField";
 import Button from "../../components/Button";
@@ -9,6 +9,7 @@ import { useWallet } from "../../context/WalletContext";
 import { formatPrice } from "../../utils/pricing";
 import { formatDateTime } from "../../utils/format";
 import { colors, radius, spacing } from "../../theme/colors";
+import { showAlert } from "../../utils/dialog";
 
 const QUICK_AMOUNTS = [5, 10, 20, 50];
 
@@ -43,7 +44,7 @@ export default function WalletScreen() {
       setError("Maximum top-up is $500.");
       return;
     }
-    Alert.alert("Simulated payment", `Charge ${formatPrice(value)} to your card ending in 4242?`, [
+    showAlert("Simulated payment", `Charge ${formatPrice(value)} to your card ending in 4242?`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Pay",
@@ -54,7 +55,7 @@ export default function WalletScreen() {
             return;
           }
           setAmount("");
-          Alert.alert("Top-up successful", `${formatPrice(value)} was added to your wallet.`);
+          showAlert("Top-up successful", `${formatPrice(value)} was added to your wallet.`);
         },
       },
     ]);

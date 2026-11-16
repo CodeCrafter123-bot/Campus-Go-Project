@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Text, Pressable, Modal, FlatList, Alert, StyleSheet } from "react-native";
+import { View, Text, Pressable, Modal, FlatList, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import FormContainer from "../../components/FormContainer";
 import TextField from "../../components/TextField";
@@ -12,6 +12,7 @@ import { calcPrintPrice, validatePrintJob, formatPrice } from "../../utils/prici
 import useAddToCart from "../../utils/useAddToCart";
 import useNow from "../../utils/useNow";
 import { colors, radius, spacing } from "../../theme/colors";
+import { showAlert } from "../../utils/dialog";
 
 // Simulated "upload": the user picks one of these files from a fake file browser.
 const SAMPLE_FILES = [
@@ -100,7 +101,7 @@ export default function PrintingScreen({ navigation }) {
       },
       () => {
         setJob(EMPTY_JOB);
-        Alert.alert("Added to cart", `${job.name.trim()} – ${copies} cop${copies > 1 ? "ies" : "y"}`, [
+        showAlert("Added to cart", `${job.name.trim()} – ${copies} cop${copies > 1 ? "ies" : "y"}`, [
           { text: "Print another", style: "cancel" },
           { text: "View cart", onPress: () => navigation.navigate("CartTab", { screen: "Cart" }) },
         ]);

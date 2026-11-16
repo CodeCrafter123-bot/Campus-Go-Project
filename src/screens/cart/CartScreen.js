@@ -1,5 +1,5 @@
 import { useLayoutEffect } from "react";
-import { View, Text, FlatList, Pressable, Alert, StyleSheet } from "react-native";
+import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import CartItemRow from "../../components/CartItemRow";
 import PriceSummary from "../../components/PriceSummary";
@@ -11,6 +11,7 @@ import { getOrderTotals, meetsMinimumOrder, formatPrice, round2 } from "../../ut
 import { isStoreOpen } from "../../utils/time";
 import useNow from "../../utils/useNow";
 import { colors, radius, spacing } from "../../theme/colors";
+import { showAlert } from "../../utils/dialog";
 
 export default function CartScreen({ navigation }) {
   const cart = useCart();
@@ -21,7 +22,7 @@ export default function CartScreen({ navigation }) {
   const minimumOk = meetsMinimumOrder(cart.subtotal);
 
   const confirmClear = () =>
-    Alert.alert("Empty cart?", "All items will be removed.", [
+    showAlert("Empty cart?", "All items will be removed.", [
       { text: "Cancel", style: "cancel" },
       { text: "Empty cart", style: "destructive", onPress: cart.clearCart },
     ]);

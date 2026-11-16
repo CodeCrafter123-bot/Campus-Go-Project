@@ -1,7 +1,7 @@
 import { useCallback } from "react";
-import { Alert } from "react-native";
 import { useCart } from "../context/CartContext";
 import { getStoreById } from "../data";
+import { showAlert } from "./dialog";
 
 /**
  * Returns addToCart(item, onAdded).
@@ -20,7 +20,7 @@ export default function useAddToCart() {
       }
       const currentStore = getStoreById(cartStoreId)?.name || "another store";
       const newStore = getStoreById(item.storeId)?.name || "this store";
-      Alert.alert(
+      showAlert(
         "Start a new cart?",
         `Your cart has items from ${currentStore}. You can only order from one store at a time.\n\nEmpty the cart and add this item from ${newStore}?`,
         [
