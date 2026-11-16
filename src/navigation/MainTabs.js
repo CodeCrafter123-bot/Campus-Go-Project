@@ -1,6 +1,7 @@
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
+import { useCart } from "../context/CartContext";
 import { HomeStack, PrintStack, CartStack, OrdersStack, ProfileStack } from "./stacks";
 
 const Tab = createBottomTabNavigator();
@@ -14,6 +15,7 @@ const TAB_ICONS = {
 };
 
 export default function MainTabs() {
+  const { itemCount } = useCart();
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -31,7 +33,7 @@ export default function MainTabs() {
     >
       <Tab.Screen name="HomeTab" component={HomeStack} options={{ title: "Stores" }} />
       <Tab.Screen name="PrintTab" component={PrintStack} options={{ title: "Print" }} />
-      <Tab.Screen name="CartTab" component={CartStack} options={{ title: "Cart" }} />
+      <Tab.Screen name="CartTab" component={CartStack} options={{ title: "Cart", tabBarBadge: itemCount > 0 ? itemCount : undefined }} />
       <Tab.Screen name="OrdersTab" component={OrdersStack} options={{ title: "Orders" }} />
       <Tab.Screen name="ProfileTab" component={ProfileStack} options={{ title: "Profile" }} />
     </Tab.Navigator>

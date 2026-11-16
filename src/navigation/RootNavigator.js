@@ -1,4 +1,7 @@
+import { ActivityIndicator, View } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useAuth } from "../context/AuthContext";
+import { colors } from "../theme/colors";
 import { stackScreenOptions } from "./stacks";
 import MainTabs from "./MainTabs";
 import WelcomeScreen from "../screens/auth/WelcomeScreen";
@@ -7,15 +10,30 @@ import SignUpScreen from "../screens/auth/SignUpScreen";
 
 const Stack = createNativeStackNavigator();
 
-// Auth screens + the main tab app.
-// (In step 3 this will switch automatically based on the logged-in user.)
+// Shows the auth screens when logged out and the tab app when logged in.
+// Logging in/out switches automatically – no manual navigation needed.
 export default function RootNavigator() {
+  const { user, booting } = useAuth();
+
+  if (booting) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
-      <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
-      <Stack.Screen name="Login" component={LoginScreen} options={{ title: "Log in" }} />
-      <Stack.Screen name="SignUp" component={SignUpScreen} options={{ title: "Create account" }} />
-      <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+      {user ? (
+        <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+      ) : (
+        <>
+          <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
+          <Stack.Screen name="Login" component={LoginScreen} options={{ title: "Log in" }} />
+          <Stack.Screen name="SignUp" component={SignUpScreen} options={{ title: "Create account" }} />
+        </>
+      )}
     </Stack.Navigator>
   );
 }
