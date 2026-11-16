@@ -53,5 +53,6 @@ export function validatePrintJob({ name, pages, copies }) {
   if (!Number.isInteger(p) || p <= 0) return "Number of pages must be greater than 0.";
   if (p > printPricing.maxPages) return `Maximum ${printPricing.maxPages} pages per order.`;
   if (!Number.isInteger(c) || c <= 0) return "Number of copies must be greater than 0.";
+  if (c > printPricing.maxCopies) return `Maximum ${printPricing.maxCopies} copies per order.`;
   return null;
 }

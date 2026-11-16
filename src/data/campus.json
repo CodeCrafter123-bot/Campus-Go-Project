@@ -142,7 +142,8 @@
     "color": 0.25,
     "doubleSidedDiscount": 0.1,
     "binding": { "none": 0, "staple": 0.25, "spiral": 1.5 },
-    "maxPages": 200
+    "maxPages": 200,
+    "maxCopies": 50
   },
 
   "couriers": ["Karim", "Maya", "Elie", "Rita", "Joe"]
