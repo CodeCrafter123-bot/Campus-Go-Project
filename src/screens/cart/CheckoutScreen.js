@@ -15,16 +15,9 @@ import { buildings, deliverySlots, getStoreById, settings } from "../../data";
 import { checkSlot, isStoreOpen, slotLabel } from "../../utils/time";
 import { getOrderTotals, formatPrice } from "../../utils/pricing";
 import { locationLabel } from "../../utils/format";
+import { validateRoom } from "../../utils/validation";
 import useNow from "../../utils/useNow";
 import { colors, radius, spacing } from "../../theme/colors";
-
-// Room: 1–6 letters/digits containing at least one digit (e.g. 204, B12, 3A).
-const validateRoom = (room) => {
-  const r = room.trim();
-  if (!r) return "Room number is required.";
-  if (!/^[A-Za-z0-9-]{1,6}$/.test(r) || !/\d/.test(r)) return "Enter a valid room (e.g. 204 or B12).";
-  return null;
-};
 
 export default function CheckoutScreen({ navigation }) {
   const { user, addLocation } = useAuth();

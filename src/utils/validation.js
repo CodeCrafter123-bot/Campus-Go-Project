@@ -65,6 +65,14 @@ export function validatePhone(value) {
   return null;
 }
 
+// Room: 1–6 letters/digits containing at least one digit (e.g. 204, B12, 3A).
+export function validateRoom(value) {
+  const room = value.trim();
+  if (!room) return "Room number is required.";
+  if (!/^[A-Za-z0-9-]{1,6}$/.test(room) || !/\d/.test(room)) return "Enter a valid room (e.g. 204 or B12).";
+  return null;
+}
+
 // Runs a { field: validatorFn } map and returns { field: message } for the failing ones.
 export function runValidators(validators) {
   const errors = {};
