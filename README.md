@@ -26,7 +26,7 @@ CampusGo is a React Native (Expo) mobile app that lets students and staff of Uni
 
 | | |
 |---|---|
-| Framework | React Native 0.88 with **Expo SDK 58** (runs in Expo Go) |
+| Framework | React Native 0.81 with **Expo SDK 54** (runs in Expo Go from the App Store / Play Store) |
 | Navigation | **React Navigation 7** – bottom tabs + native stack navigators |
 | State | React **Hooks** (`useState`, `useEffect`, `useMemo`, `useCallback`) + **Context API** |
 | Storage | **AsyncStorage** – users, session, cart, wallet and orders are saved on the phone |
@@ -43,6 +43,8 @@ No real backend, payment or GPS: login, payments, top-ups and order tracking are
 ### Requirements
 - [Node.js](https://nodejs.org/) (LTS)
 - The **Expo Go** app on your phone (Android / iOS), **or** an Android emulator / iOS simulator
+
+> The project uses **Expo SDK 54** on purpose: it is the latest SDK supported by Expo Go on the Apple App Store.
 
 ### Install and run
 
