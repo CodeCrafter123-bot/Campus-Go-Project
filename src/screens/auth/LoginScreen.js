@@ -87,8 +87,9 @@ export default function LoginScreen({ navigation }) {
       </Pressable>
 
       <View style={styles.demoBox}>
-        <Text style={styles.demoTitle}>Demo account</Text>
-        <Text style={styles.demoText}>demo@ua.edu.lb · campus123</Text>
+        <Text style={styles.demoTitle}>Demo accounts</Text>
+        <Text style={styles.demoText}>Student: demo@ua.edu.lb · campus123</Text>
+        <Text style={styles.demoText}>Admin: admin@ua.edu.lb · admin123</Text>
       </View>
     </FormContainer>
   );

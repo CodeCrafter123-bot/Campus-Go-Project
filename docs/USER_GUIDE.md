@@ -17,7 +17,8 @@ This guide explains how to use CampusGo, the campus delivery app of Université 
 9. [Your orders and reordering](#9-your-orders-and-reordering)
 10. [Profile and saved locations](#10-profile-and-saved-locations)
 11. [Campus Wallet](#11-campus-wallet)
-12. [FAQ / Troubleshooting](#12-faq--troubleshooting)
+12. [Admin panel](#12-admin-panel)
+13. [FAQ / Troubleshooting](#13-faq--troubleshooting)
 
 ---
 
@@ -51,7 +52,9 @@ Tap **Create account**. Any problem is shown **in red under the field**; it upda
 ### Log in
 Tap **Log in**, enter your university email and password. Use the 👁 icon to show/hide the password.
 
-**Demo account:** `demo@ua.edu.lb` / `campus123`
+**Demo accounts:**
+- Student: `demo@ua.edu.lb` / `campus123`
+- Admin: `admin@ua.edu.lb` / `admin123` (opens the [Admin panel](#12-admin-panel))
 
 You stay logged in even if you close the app.
 
@@ -204,7 +207,30 @@ Open it from Profile → **Campus Wallet**, or from the Home banner.
 
 ---
 
-## 12. FAQ / Troubleshooting
+## 12. Admin panel
+
+Log in with an **admin** account (e.g. `admin@ua.edu.lb` / `admin123`). Instead of the store tabs you get two tabs, **Dashboard** and **Users**, and a **log-out** icon at the top-right.
+
+### Dashboard
+- **Users** – total users, active, frozen and admins
+- **Sales** – sales today, orders today, total sales and new users in the last 7 days (cancelled orders are not counted)
+- **Orders – last 7 days** – a bar chart of orders per day
+- **Top products** and **Most active stores**
+- Tap **Refresh** to reload the numbers
+
+### Users
+- Search accounts by **name, email or ID**
+- Each account shows its role and an **Active** / **Frozen** badge
+- **Freeze** – the user can no longer log in until you tap **Unfreeze**
+- **Delete** – permanently removes the account and its wallet, cart and orders (asks for confirmation)
+- **Create new admin** – name, `@ua.edu.lb` email and password (8+ characters, letters and numbers)
+- Tap an account to open **User details**: account info, wallet balance and recent transactions, recent orders and total spent, current cart and saved locations
+
+Your own account and the main admin (`admin@ua.edu.lb`) are protected: they cannot be frozen or deleted. A normal sign-up can never create an admin.
+
+---
+
+## 13. FAQ / Troubleshooting
 
 **All stores show "Closed".**
 Opening hours use your phone's time. Stores are closed on Sundays and in the evening (most close between 15:00 and 18:00).
@@ -214,6 +240,9 @@ All class breaks have passed or are too close for the store's preparation time. 
 
 **I can't log in with my email.**
 Only university emails ending with `@ua.edu.lb` are accepted. Check the password (8+ characters).
+
+**"This account has been frozen".**
+An administrator froze your account. Ask an admin to unfreeze it from the Admin panel.
 
 **My order status stopped moving.**
 The simulation only runs while the tracking screen is open. Open the order again from the **Orders** tab.

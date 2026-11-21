@@ -16,7 +16,9 @@ import {
 } from "../../utils/validation";
 import { showAlert } from "../../utils/dialog";
 import { colors, radius, spacing } from "../../theme/colors";
+
 const EMPTY_ADMIN = { fullName: "", email: "", password: "", confirm: "" };
+
 const validate = (v) =>
   runValidators({
     fullName: () => validateRequired(v.fullName, "Name"),
@@ -24,6 +26,7 @@ const validate = (v) =>
     password: () => validatePassword(v.password),
     confirm: () => validateConfirmPassword(v.password, v.confirm),
   });
+
 export default function AdminScreen() {
   const { user, adminUsers, setFrozen, createAdmin, deleteUser } = useAuth();
   const navigation = useNavigation();
@@ -198,7 +201,7 @@ export default function AdminScreen() {
             item={item}
             isSelf={item.id === user.id}
             isProtected={item.id === ROOT_ADMIN_ID}
-onOpen={() => navigation.navigate("UserDetails", { userId: item.id })}
+            onOpen={() => navigation.navigate("UserDetails", { userId: item.id })}
             onFreeze={() => confirmFreeze(item)}
             onDelete={() => confirmDelete(item)}
           />
@@ -207,6 +210,7 @@ onOpen={() => navigation.navigate("UserDetails", { userId: item.id })}
     </KeyboardAvoidingView>
   );
 }
+
 function UserRow({ item, isSelf, isProtected, onOpen, onFreeze, onDelete }) {
   const isAdmin = item.role === "admin";
   const locked = isSelf || isProtected;
@@ -244,6 +248,7 @@ function UserRow({ item, isSelf, isProtected, onOpen, onFreeze, onDelete }) {
     </View>
   );
 }
+
 function Stat({ value, label }) {
   return (
     <View style={styles.stat}>
@@ -252,6 +257,7 @@ function Stat({ value, label }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },

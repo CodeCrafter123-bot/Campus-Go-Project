@@ -7,7 +7,9 @@ import { loadJSON } from "../../utils/storage";
 import { computeStats } from "../../utils/adminStats";
 import { formatPrice } from "../../utils/pricing";
 import { colors, radius, spacing } from "../../theme/colors";
+
 const CHART_HEIGHT = 90;
+
 export default function Dashboard() {
   const { adminUsers } = useAuth();
   const [orders, setOrders] = useState([]);
@@ -31,7 +33,8 @@ export default function Dashboard() {
         <Text style={styles.title}>Overview</Text>
         <Button title="Refresh" variant="ghost" icon="refresh-outline" onPress={load} loading={loading} style={styles.refresh} />
       </View>
-          <Text style={styles.sectionLabel}>Users</Text>
+
+      <Text style={styles.sectionLabel}>Users</Text>
       <View style={styles.grid}>
         <Kpi label="Total users" value={stats.totalUsers} />
         <Kpi label="Active" value={stats.activeUsers} />
@@ -81,6 +84,7 @@ export default function Dashboard() {
     </ScrollView>
   );
 }
+
 function Kpi({ label, value }) {
   return (
     <View style={styles.kpi}>
@@ -89,6 +93,7 @@ function Kpi({ label, value }) {
     </View>
   );
 }
+
 function Row({ rank, name, value }) {
   return (
     <View style={styles.row}>
@@ -98,13 +103,14 @@ function Row({ rank, name, value }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xl },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
   title: { fontSize: 18, fontWeight: "800", color: colors.text },
   refresh: { minHeight: 36, paddingHorizontal: spacing.md },
-    sectionLabel: { fontSize: 13, fontWeight: "700", color: colors.textMuted, marginBottom: spacing.sm },
+  sectionLabel: { fontSize: 13, fontWeight: "700", color: colors.textMuted, marginBottom: spacing.sm },
   sectionGap: { marginTop: spacing.lg },
   grid: { flexDirection: "row", flexWrap: "wrap", gap: spacing.sm },
   kpi: { width: "48.5%", backgroundColor: colors.card, borderRadius: radius.md, padding: spacing.md },

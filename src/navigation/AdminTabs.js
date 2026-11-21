@@ -6,8 +6,11 @@ import { useAuth } from "../context/AuthContext";
 import { showAlert } from "../utils/dialog";
 import Dashboard from "../screens/admin/Dashboard";
 import AdminScreen from "../screens/admin/AdminScreen";
+
 const Tab = createBottomTabNavigator();
+
 const TAB_ICONS = { DashboardTab: "stats-chart", UsersTab: "people" };
+
 function LogoutButton() {
   const { logout } = useAuth();
   const confirmLogout = () =>
@@ -21,6 +24,7 @@ function LogoutButton() {
     </Pressable>
   );
 }
+
 export default function AdminTabs() {
   return (
     <Tab.Navigator

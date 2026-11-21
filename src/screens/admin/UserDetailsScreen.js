@@ -13,6 +13,7 @@ import { formatDateTime } from "../../utils/format";
 import { getBuildingById, getStoreById } from "../../data";
 import { showAlert } from "../../utils/dialog";
 import { colors, radius, spacing } from "../../theme/colors";
+
 export default function UserDetailsScreen({ route, navigation }) {
   const { userId } = route.params;
   const { user: me, adminUsers, setFrozen, deleteUser } = useAuth();
@@ -185,6 +186,7 @@ export default function UserDetailsScreen({ route, navigation }) {
     </ScrollView>
   );
 }
+
 function Card({ title, children }) {
   return (
     <View style={styles.card}>
@@ -193,6 +195,7 @@ function Card({ title, children }) {
     </View>
   );
 }
+
 function InfoRow({ label, value }) {
   return (
     <View style={styles.infoRow}>
@@ -201,6 +204,7 @@ function InfoRow({ label, value }) {
     </View>
   );
 }
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },

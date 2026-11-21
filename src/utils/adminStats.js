@@ -1,7 +1,11 @@
+// Numbers for the admin dashboard, computed from every user's orders.
 import { round2 } from "./pricing";
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const dayKey = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+// Cancelled orders are not counted as sales. "Members" = non-admin accounts.
 export function computeStats(orders, users, now = new Date()) {
   const valid = orders.filter((o) => o.status !== "cancelled");
   const sum = (list) => round2(list.reduce((total, o) => total + (o.total || 0), 0));
@@ -36,7 +40,7 @@ export function computeStats(orders, users, now = new Date()) {
   const members = users.filter((u) => u.role !== "admin");
   const frozenUsers = members.filter((u) => u.frozen).length;
   const weekAgo = now.getTime() - 7 * DAY_MS;
-  const newUsers = users.filter((u) => u.createdAt && new Date(u.createdAt).getTime() >= weekAgo).length;
+  const newUsers = members.filter((u) => u.createdAt && new Date(u.createdAt).getTime() >= weekAgo).length;
   return {
     salesToday: sum(todayOrders),
     ordersToday: todayOrders.length,

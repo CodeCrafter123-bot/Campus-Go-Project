@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { loadJSON, saveJSON, removeKey, makeId } from "../utils/storage";
-import { validateEmail } from "../utils/validation";
+import { validateEmail, validateRequired, validatePassword } from "../utils/validation";
 
 /*
  * Simulated authentication (no real backend).
@@ -68,12 +68,9 @@ export function AuthProvider({ children }) {
         storedUsers = [DEMO_USER];
         changed = true;
       }
+      // Make sure the main admin always exists (also on phones that installed the app before the admin panel).
       if (!storedUsers.some((u) => u.id === ROOT_ADMIN_ID)) {
         storedUsers = [...storedUsers, ROOT_ADMIN];
-        changed = true;
-      } else if (storedUsers.some((u) => u.id === ROOT_ADMIN_ID && u.email !== ROOT_ADMIN.email)) {
-        // Older installs: bring the main admin's email up to date.
-        storedUsers = storedUsers.map((u) => (u.id === ROOT_ADMIN_ID ? { ...u, email: ROOT_ADMIN.email } : u));
         changed = true;
       }
       if (changed) await saveJSON("users", storedUsers);
@@ -201,8 +198,8 @@ export function AuthProvider({ children }) {
   const createAdmin = useCallback(
     ({ fullName, email, password }) => {
       if (!isAdmin) return { error: "Only admins can do this." };
-      const emailError = validateEmail(email);
-      if (emailError) return { error: emailError };
+      const formError = validateRequired(fullName, "Name") || validateEmail(email) || validatePassword(password);
+      if (formError) return { error: formError };
       const cleanEmail = email.trim().toLowerCase();
       if (users.some((u) => u.email.toLowerCase() === cleanEmail)) {
         return { error: "An account with this email already exists." };
