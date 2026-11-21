@@ -4,17 +4,14 @@ import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
 import { stackScreenOptions } from "./stacks";
 import MainTabs from "./MainTabs";
+import AdminTabs from "./AdminTabs";
+import UserDetailsScreen from "../screens/admin/UserDetailsScreen";
 import WelcomeScreen from "../screens/auth/WelcomeScreen";
 import LoginScreen from "../screens/auth/LoginScreen";
 import SignUpScreen from "../screens/auth/SignUpScreen";
-
 const Stack = createNativeStackNavigator();
-
-// Shows the auth screens when logged out and the tab app when logged in.
-// Logging in/out switches automatically – no manual navigation needed.
 export default function RootNavigator() {
   const { user, booting } = useAuth();
-
   if (booting) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
@@ -22,11 +19,16 @@ export default function RootNavigator() {
       </View>
     );
   }
-
   return (
     <Stack.Navigator screenOptions={stackScreenOptions}>
       {user ? (
-        <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+        user.role === "admin" ? (
+<>
+  <Stack.Screen name="AdminMain" component={AdminTabs} options={{ headerShown: false }} />
+  <Stack.Screen name="UserDetails" component={UserDetailsScreen} options={{ title: "User details" }} />
+</>        ) : (
+          <Stack.Screen name="Main" component={MainTabs} options={{ headerShown: false }} />
+        )
       ) : (
         <>
           <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ headerShown: false }} />
