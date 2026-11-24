@@ -35,6 +35,7 @@ const toProduct = (row) => {
 export const listStores = () => getDb().prepare("SELECT * FROM stores ORDER BY sort_order").all().map(toStore);
 
 export function getStore(id) {
+  if (typeof id !== "string") return null; // missing or invalid id from a request
   const row = getDb().prepare("SELECT * FROM stores WHERE id = ?").get(id);
   return row ? toStore(row) : null;
 }
@@ -48,6 +49,7 @@ export function listProducts(storeId) {
 }
 
 export function getProduct(id) {
+  if (typeof id !== "string") return null;
   const row = getDb().prepare("SELECT * FROM products WHERE id = ?").get(id);
   return row ? toProduct(row) : null;
 }

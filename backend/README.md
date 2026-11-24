@@ -46,6 +46,30 @@ Routes marked 🔒 need the login token in a header:
 | GET 🔒 | `/api/locations` | Your saved delivery locations |
 | POST 🔒 | `/api/locations` | Save a location `{ label, buildingId, room }` |
 | DELETE 🔒 | `/api/locations/:locationId` | Remove one of your saved locations |
+| GET 🔒 | `/api/orders` | Your orders, newest first, with up-to-date status |
+| POST 🔒 | `/api/orders` | Place an order `{ items, buildingId, room, slotId, paymentMethod, expectedTotal? }` |
+| GET 🔒 | `/api/orders/:orderId` | One of your orders (used by the tracking screen) |
+| POST 🔒 | `/api/orders/:orderId/cancel` | Cancel while "Received"; wallet payments are refunded |
+| POST 🔒 | `/api/orders/:orderId/rate` | Rate a delivered order once `{ stars, comment? }` |
+
+### How an order is checked
+
+The app only sends **what** the user wants (product ids, size and extra names,
+quantities, print options). The server then, in this order:
+
+1. checks the cart is not empty and comes from **one store**
+2. checks the store is **open now**
+3. looks up every product, size and extra in the database and **recalculates the price**
+   (any price sent by the app is ignored), refusing out-of-stock products and bad quantities
+4. checks the **minimum order** ($2), the **building**, the **room** and the **delivery slot**
+   (not passed, enough time to prepare + 5 min, store still open)
+5. if the app sent `expectedTotal` and the real total is different, refuses the order
+   so the user is never charged an amount they did not see
+6. saves the order and takes the wallet payment **in one transaction**: if the
+   payment fails, the order is not saved either
+
+Order status moves forward **by itself with time** (Received 10 s → Preparing 8 s →
+On the way 8 s → Delivered), even while the app is closed.
 
 Logging out only needs the app to forget its token.
 
@@ -74,7 +98,8 @@ backend/
 │   │   ├── stores/     # stores and one store's menu
 │   │   ├── products/   # one product
 │   │   ├── wallet/     # balance, transactions, top-up
-│   │   └── locations/  # saved delivery locations
+│   │   ├── locations/  # saved delivery locations
+│   │   └── orders/     # place, list, track, cancel, rate
 │   └── page.js         # small info page
 ├── data/
 │   └── campus.json     # seed data (copied into the database on first run)
@@ -83,6 +108,8 @@ backend/
     ├── auth.js         # requireUser / requireAdmin (protects routes)
     ├── catalog.js      # reads stores, products, buildings, slots
     ├── http.js         # error responses and JSON helpers
+    ├── orders.js       # placing, tracking, cancelling and rating orders
+    ├── pricing.js      # delivery fee and printing price (server-side)
     ├── password.js     # password hashing (scrypt)
     ├── time.js         # opening hours and delivery-slot rules (same as the app)
     ├── token.js        # login tokens (JWT)
