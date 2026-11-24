@@ -37,6 +37,10 @@ Routes marked 🔒 need the login token in a header:
 | POST | `/api/auth/login` | Log in → `{ token, user }` |
 | GET 🔒 | `/api/auth/me` | The logged-in user |
 | PATCH 🔒 | `/api/auth/me` | Edit your name, phone or faculty |
+| GET | `/api/catalog` | Everything the app loads at start-up: settings, print prices, stores, products, buildings, delivery slots |
+| GET | `/api/stores` | Stores with their live open/closed status |
+| GET | `/api/stores/:storeId` | One store, its status and its products |
+| GET | `/api/products/:productId` | One product with its sizes and extras |
 
 Logging out only needs the app to forget its token.
 
@@ -56,15 +60,20 @@ backend/
 ├── app/
 │   ├── api/            # API routes (one folder per URL, each with route.js)
 │   │   ├── health/
-│   │   └── auth/       # signup, login, me
+│   │   ├── auth/       # signup, login, me
+│   │   ├── catalog/    # whole catalog in one request
+│   │   ├── stores/     # stores and one store's menu
+│   │   └── products/   # one product
 │   └── page.js         # small info page
 ├── data/
 │   └── campus.json     # seed data (copied into the database on first run)
 └── lib/
     ├── db.js           # database connection, tables and seed
     ├── auth.js         # requireUser / requireAdmin (protects routes)
+    ├── catalog.js      # reads stores, products, buildings, slots
     ├── http.js         # error responses and JSON helpers
     ├── password.js     # password hashing (scrypt)
+    ├── time.js         # opening hours and delivery-slot rules (same as the app)
     ├── token.js        # login tokens (JWT)
     └── validation.js   # input rules (same as the app)
 proxy.js                # CORS, so the web version of the app can call the API
