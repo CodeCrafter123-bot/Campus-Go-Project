@@ -51,6 +51,17 @@ Routes marked 🔒 need the login token in a header:
 | GET 🔒 | `/api/orders/:orderId` | One of your orders (used by the tracking screen) |
 | POST 🔒 | `/api/orders/:orderId/cancel` | Cancel while "Received"; wallet payments are refunded |
 | POST 🔒 | `/api/orders/:orderId/rate` | Rate a delivered order once `{ stars, comment? }` |
+| GET 🔒👑 | `/api/admin/users?search=` | All accounts (search by name, email or ID) |
+| POST 🔒👑 | `/api/admin/users` | Create a new admin `{ fullName, email, password }` |
+| GET 🔒👑 | `/api/admin/users/:userId` | One account with its wallet and orders |
+| PATCH 🔒👑 | `/api/admin/users/:userId` | Freeze or unfreeze `{ frozen: true | false }` |
+| DELETE 🔒👑 | `/api/admin/users/:userId` | Delete the account with its wallet history, locations and orders |
+| GET 🔒👑 | `/api/admin/stats` | Dashboard numbers: users, sales, orders per day (7 days), top products and stores |
+
+👑 = admin accounts only (a normal user gets `403`).
+
+Admin protection: an admin can't freeze or delete **their own** account, and the
+**main admin** (`admin@ua.edu.lb`) can never be frozen or deleted.
 
 ### How an order is checked
 
@@ -99,12 +110,15 @@ backend/
 │   │   ├── products/   # one product
 │   │   ├── wallet/     # balance, transactions, top-up
 │   │   ├── locations/  # saved delivery locations
-│   │   └── orders/     # place, list, track, cancel, rate
+│   │   ├── orders/     # place, list, track, cancel, rate
+│   │   └── admin/      # users (list, create admin, freeze, delete) and stats
 │   └── page.js         # small info page
 ├── data/
 │   └── campus.json     # seed data (copied into the database on first run)
 └── lib/
     ├── db.js           # database connection, tables and seed
+    ├── admin.js        # admin actions and their protection rules
+    ├── adminStats.js   # dashboard numbers (same calculation as the app)
     ├── auth.js         # requireUser / requireAdmin (protects routes)
     ├── catalog.js      # reads stores, products, buildings, slots
     ├── http.js         # error responses and JSON helpers
