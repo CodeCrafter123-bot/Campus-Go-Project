@@ -1,31 +1,50 @@
-import { useCallback, useMemo, useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { useCallback, useState } from "react";
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
 import { useFocusEffect } from "@react-navigation/native";
 import Button from "../../components/Button";
+import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
-import { loadJSON } from "../../utils/storage";
-import { computeStats } from "../../utils/adminStats";
 import { formatPrice } from "../../utils/pricing";
 import { colors, radius, spacing } from "../../theme/colors";
 
 const CHART_HEIGHT = 90;
 
+// The numbers are calculated by the server (GET /api/admin/stats) from every user's orders.
 export default function Dashboard() {
-  const { adminUsers } = useAuth();
-  const [orders, setOrders] = useState([]);
+  const { request } = useAuth();
+  const [stats, setStats] = useState(null);
+  const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+
   const load = useCallback(async () => {
     setLoading(true);
-    const lists = await Promise.all(adminUsers.map((u) => loadJSON(`user:${u.id}:orders`, [])));
-    setOrders(lists.flat());
+    const { data, error: loadError } = await request("/admin/stats");
+    if (data) setStats(data.stats);
+    setError(loadError || null);
     setLoading(false);
-  }, [adminUsers]);
+  }, [request]);
+
+  // Reload every time the Dashboard tab is opened.
   useFocusEffect(
     useCallback(() => {
       load();
     }, [load])
   );
-  const stats = useMemo(() => computeStats(orders, adminUsers), [orders, adminUsers]);
+
+  if (!stats) {
+    return (
+      <View style={styles.center}>
+        {loading ? (
+          <ActivityIndicator size="large" color={colors.primary} />
+        ) : (
+          <EmptyState icon="cloud-offline-outline" title="Could not load the dashboard" message={error}>
+            <Button title="Try again" icon="refresh" onPress={load} />
+          </EmptyState>
+        )}
+      </View>
+    );
+  }
+
   const maxCount = Math.max(1, ...stats.week.map((d) => d.count));
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -33,6 +52,7 @@ export default function Dashboard() {
         <Text style={styles.title}>Overview</Text>
         <Button title="Refresh" variant="ghost" icon="refresh-outline" onPress={load} loading={loading} style={styles.refresh} />
       </View>
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
       <Text style={styles.sectionLabel}>Users</Text>
       <View style={styles.grid}>
@@ -106,6 +126,8 @@ function Row({ rank, name, value }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background },
+  errorText: { color: colors.danger, marginBottom: spacing.sm },
   content: { padding: spacing.lg, paddingBottom: spacing.xl },
   titleRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: spacing.sm },
   title: { fontSize: 18, fontWeight: "800", color: colors.text },

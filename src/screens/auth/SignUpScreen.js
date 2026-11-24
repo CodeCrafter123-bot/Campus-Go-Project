@@ -65,13 +65,19 @@ export default function SignUpScreen({ navigation }) {
       return;
     }
     setLoading(true);
-    const { error } = await signUp({
-      ...form,
+    const { error, fields } = await signUp({
+      fullName: form.fullName.trim(),
+      email: form.email.trim().toLowerCase(),
       universityId: form.universityId.trim().toUpperCase(),
+      faculty: form.faculty,
       phone: form.phone.replace(/[\s-]/g, "").replace(/^\+961/, ""),
+      password: form.password,
     });
     setLoading(false);
-    if (error) setFormError(error);
+    if (error) {
+      setFormError(error);
+      if (fields) setErrors(fields); // errors found by the server, shown under each field
+    }
     // On success the navigator switches to the app automatically.
   };
 

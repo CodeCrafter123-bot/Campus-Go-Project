@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { View, Text, ScrollView, StyleSheet } from "react-native";
+import { View, Text, ScrollView, ActivityIndicator, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import Button from "../../components/Button";
@@ -7,38 +7,46 @@ import StatusBadge from "../../components/StatusBadge";
 import EmptyState from "../../components/EmptyState";
 import { useAuth, ROOT_ADMIN_ID } from "../../context/AuthContext";
 import { STATUS_LABELS } from "../../context/OrdersContext";
-import { loadJSON } from "../../utils/storage";
 import { formatPrice, round2 } from "../../utils/pricing";
 import { formatDateTime } from "../../utils/format";
-import { getBuildingById, getStoreById } from "../../data";
+import { getBuildingById } from "../../data";
 import { showAlert } from "../../utils/dialog";
 import { colors, radius, spacing } from "../../theme/colors";
 
+// Shows one account with its wallet and orders, loaded from GET /api/admin/users/:userId.
+// (The cart is not shown: it stays on the user's own phone.)
 export default function UserDetailsScreen({ route, navigation }) {
   const { userId } = route.params;
-  const { user: me, adminUsers, setFrozen, deleteUser } = useAuth();
-  const target = adminUsers.find((u) => u.id === userId);
-  const [wallet, setWallet] = useState(null);
-  const [orders, setOrders] = useState([]);
-  const [cart, setCart] = useState(null);
+  const { user: me, request, setFrozen, deleteUser } = useAuth();
+  const [details, setDetails] = useState(null); // { user, wallet, orders }
+  const [error, setError] = useState(null);
+
+  const load = useCallback(async () => {
+    const { data, error: loadError } = await request(`/admin/users/${userId}`);
+    if (data) setDetails(data);
+    setError(loadError || null);
+  }, [request, userId]);
+
   useFocusEffect(
     useCallback(() => {
-      (async () => {
-        setWallet(await loadJSON(`user:${userId}:wallet`, null));
-        setOrders(await loadJSON(`user:${userId}:orders`, []));
-        setCart(await loadJSON(`user:${userId}:cart`, null));
-      })();
-    }, [userId])
+      load();
+    }, [load])
   );
-  if (!target) {
-    return <EmptyState icon="person-outline" title="User not found" message="This account no longer exists." />;
+
+  if (!details) {
+    return error ? (
+      <EmptyState icon="person-outline" title="User not found" message={error} />
+    ) : (
+      <View style={styles.center}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
   }
+  const { user: target, wallet, orders } = details;
   const isAdmin = target.role === "admin";
   const locked = target.id === me.id || target.id === ROOT_ADMIN_ID;
-  const sortedOrders = [...orders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  const sortedOrders = orders; // the server already sends them newest first
   const totalSpent = round2(orders.filter((o) => o.status !== "cancelled").reduce((sum, o) => sum + (o.total || 0), 0));
-  const cartItems = cart?.items || [];
-  const cartCount = cartItems.reduce((n, i) => n + (i.quantity || 0), 0);
   const infoRows = [
     ["Full name", target.fullName],
     ["Email", target.email],
@@ -62,23 +70,24 @@ export default function UserDetailsScreen({ route, navigation }) {
         {
           text: freezing ? "Freeze" : "Unfreeze",
           style: freezing ? "destructive" : "default",
-          onPress: () => {
-            const { error } = setFrozen(target.id, freezing);
-            if (error) showAlert("Not allowed", error);
+          onPress: async () => {
+            const { error: freezeError } = await setFrozen(target.id, freezing);
+            if (freezeError) showAlert("Not allowed", freezeError);
+            else load(); // show the new status
           },
         },
       ]
     );
   };
   const confirmDelete = () =>
-    showAlert("Delete user?", `${target.fullName} (${target.email}) and all their wallet, cart and order data will be permanently deleted.`, [
+    showAlert("Delete user?", `${target.fullName} (${target.email}) and all their wallet, saved locations and order data will be permanently deleted.`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
         style: "destructive",
         onPress: async () => {
-          const { error } = await deleteUser(target.id);
-          if (error) showAlert("Not allowed", error);
+          const { error: deleteError } = await deleteUser(target.id);
+          if (deleteError) showAlert("Not allowed", deleteError);
           else navigation.goBack();
         },
       },
@@ -101,25 +110,19 @@ export default function UserDetailsScreen({ route, navigation }) {
       {!isAdmin ? (
         <>
           <Card title="Wallet">
-            {wallet ? (
-              <>
-                <InfoRow label="Balance" value={formatPrice(wallet.balance)} />
-                <InfoRow label="Transactions" value={String(wallet.transactions.length)} />
-                {wallet.transactions.slice(0, 5).map((tx) => (
-                  <View key={tx.id} style={styles.listRow}>
-                    <View style={styles.listMain}>
-                      <Text style={styles.listTitle} numberOfLines={1}>{tx.description}</Text>
-                      <Text style={styles.listSub}>{formatDateTime(tx.date)}</Text>
-                    </View>
-                    <Text style={[styles.amount, { color: tx.amount >= 0 ? colors.success : colors.danger }]}>
-                      {tx.amount >= 0 ? "+" : "-"}{formatPrice(Math.abs(tx.amount))}
-                    </Text>
-                  </View>
-                ))}
-              </>
-            ) : (
-              <Text style={styles.empty}>No wallet data yet.</Text>
-            )}
+            <InfoRow label="Balance" value={formatPrice(wallet.balance)} />
+            <InfoRow label="Transactions" value={String(wallet.transactions.length)} />
+            {wallet.transactions.slice(0, 5).map((tx) => (
+              <View key={tx.id} style={styles.listRow}>
+                <View style={styles.listMain}>
+                  <Text style={styles.listTitle} numberOfLines={1}>{tx.description}</Text>
+                  <Text style={styles.listSub}>{formatDateTime(tx.date)}</Text>
+                </View>
+                <Text style={[styles.amount, { color: tx.amount >= 0 ? colors.success : colors.danger }]}>
+                  {tx.amount >= 0 ? "+" : "-"}{formatPrice(Math.abs(tx.amount))}
+                </Text>
+              </View>
+            ))}
           </Card>
           <Card title="Orders">
             <InfoRow label="Total orders" value={String(orders.length)} />
@@ -140,15 +143,6 @@ export default function UserDetailsScreen({ route, navigation }) {
                   <Text style={styles.amount}>{formatPrice(o.total)}</Text>
                 </View>
               ))
-            )}
-          </Card>
-          <Card title="Cart">
-            {cartCount > 0 ? (
-              <Text style={styles.value}>
-                {cartCount} item{cartCount > 1 ? "s" : ""} from {getStoreById(cart.storeId)?.name || "a store"}
-              </Text>
-            ) : (
-              <Text style={styles.empty}>The cart is empty.</Text>
             )}
           </Card>
           <Card title="Saved locations">
@@ -208,6 +202,7 @@ function InfoRow({ label, value }) {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   container: { flex: 1, backgroundColor: colors.background },
+  center: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xl },
   hero: { alignItems: "center", backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg },
   avatar: { width: 68, height: 68, borderRadius: 34, backgroundColor: colors.textMuted, alignItems: "center", justifyContent: "center", marginBottom: spacing.sm },

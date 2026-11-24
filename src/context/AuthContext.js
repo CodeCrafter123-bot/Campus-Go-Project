@@ -1,256 +1,204 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { loadJSON, saveJSON, removeKey, makeId } from "../utils/storage";
-import { validateEmail, validateRequired, validatePassword } from "../utils/validation";
+import { loadJSON, saveJSON, removeKey } from "../utils/storage";
+import { api, setSessionEndedHandler } from "../api/client";
 
 /*
- * Simulated authentication (no real backend).
- * - All accounts are stored in AsyncStorage under "users".
- * - The id of the logged-in user is stored under "session".
- * - Every account has a `role` ("user" or "admin") and a `frozen` flag.
- *   Frozen accounts cannot log in. Admins manage accounts from the Admin Panel.
- * Note: passwords are stored as plain text because this is a mock app;
- * a real app would never do this.
+ * Authentication through the CampusGo backend (Next.js, see /backend).
+ * - Login / sign-up send the form to the server, which answers with a TOKEN.
+ * - The token is saved on the phone (AsyncStorage key "token") and sent with
+ *   every request, so the user stays logged in after closing the app.
+ * - Passwords are only checked and stored (hashed) on the server.
+ * - If the server says the account was frozen or deleted, the app logs out.
+ * Admin actions (users list, freeze, delete, create admin) also go through the API.
  */
 
 const AuthContext = createContext(null);
 
-// Demo account created on first launch, handy for the live demonstration.
-const DEMO_USER = {
-  id: "demo",
-  fullName: "Demo Student",
-  email: "demo@ua.edu.lb",
-  password: "campus123",
-  universityId: "202312345",
-  faculty: "Engineering",
-  phone: "71123456",
-  role: "user",
-  frozen: false,
-  savedLocations: [{ id: "loc-1", label: "My Lab", buildingId: "B", room: "204" }],
-};
-
-// Main administrator. Created automatically if missing, and it can never be
-// frozen or deleted (so the app always has at least one admin).
+// Main administrator id: it can never be frozen or deleted (also enforced by the server).
 export const ROOT_ADMIN_ID = "admin";
-const ROOT_ADMIN = {
-  id: ROOT_ADMIN_ID,
-  fullName: "System Administrator",
-  email: "admin@ua.edu.lb",
-  password: "admin123",
-  universityId: "ADMIN",
-  faculty: "Administration",
-  phone: "",
-  role: "admin",
-  frozen: false,
-  savedLocations: [],
-};
-
-// Per-user data saved by usePersistedUserState (removed when a user is deleted).
-const PER_USER_KEYS = ["wallet", "cart", "orders"];
-
-// Never expose the password to the screens.
-const publicUser = (u) => {
-  if (!u) return null;
-  const { password, ...rest } = u;
-  return rest;
-};
 
 export function AuthProvider({ children }) {
-  const [users, setUsers] = useState([]);
-  const [userId, setUserId] = useState(null);
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
   const [booting, setBooting] = useState(true);
+  const [connectionError, setConnectionError] = useState(null);
+  const [sessionMessage, setSessionMessage] = useState(null); // e.g. "This account has been frozen…"
+  const [adminUsers, setAdminUsers] = useState([]);
 
-  // Load accounts + session once at app start.
+  const startSession = useCallback(async (newToken, newUser) => {
+    await saveJSON("token", newToken);
+    setToken(newToken);
+    setUser(newUser);
+    setSessionMessage(null);
+  }, []);
+
+  const endSession = useCallback(async (message = null) => {
+    await removeKey("token");
+    setToken(null);
+    setUser(null);
+    setAdminUsers([]);
+    setSessionMessage(message);
+  }, []);
+
+  // At start-up: if a token is saved, ask the server who we are.
+  const restoreSession = useCallback(async () => {
+    setBooting(true);
+    setConnectionError(null);
+    // The old offline version kept every account (with plain-text passwords)
+    // on the phone: remove that data, it is not used any more.
+    await Promise.all([removeKey("users"), removeKey("session")]);
+
+    const saved = await loadJSON("token", null);
+    if (saved) {
+      const { data, error, status } = await api("/auth/me", { token: saved });
+      if (data) {
+        setToken(saved);
+        setUser(data.user);
+      } else if (status === 0) {
+        setConnectionError(error); // server unreachable: keep the token, offer "Try again"
+      } else {
+        await endSession(status === 403 ? error : null); // expired, deleted or frozen
+      }
+    }
+    setBooting(false);
+  }, [endSession]);
+
   useEffect(() => {
-    (async () => {
-      let storedUsers = (await loadJSON("users", null)) || [];
-      let changed = false;
-      if (storedUsers.length === 0) {
-        storedUsers = [DEMO_USER];
-        changed = true;
-      }
-      // Make sure the main admin always exists (also on phones that installed the app before the admin panel).
-      if (!storedUsers.some((u) => u.id === ROOT_ADMIN_ID)) {
-        storedUsers = [...storedUsers, ROOT_ADMIN];
-        changed = true;
-      }
-      if (changed) await saveJSON("users", storedUsers);
+    restoreSession();
+  }, [restoreSession]);
 
-      const session = await loadJSON("session", null);
-      setUsers(storedUsers);
-      // A frozen account is not allowed to resume an old session.
-      if (session && storedUsers.some((u) => u.id === session && !u.frozen)) setUserId(session);
-      setBooting(false);
-    })();
-  }, []);
+  // Any request refused with 401 / "frozen" logs the user out (see api/client.js).
+  useEffect(() => {
+    setSessionEndedHandler((message) => endSession(/frozen/i.test(message) ? message : "Your session has ended. Please log in again."));
+    return () => setSessionEndedHandler(null);
+  }, [endSession]);
 
-  const persistUsers = useCallback((next) => {
-    setUsers(next);
-    saveJSON("users", next);
-  }, []);
+  // Shortcut for calling the API as the logged-in user.
+  const request = useCallback((path, options = {}) => api(path, { ...options, token }), [token]);
 
   const login = useCallback(
     async (email, password) => {
-      const found = users.find((u) => u.email.toLowerCase() === email.trim().toLowerCase());
-      if (!found || found.password !== password) {
-        return { error: "Incorrect email or password." };
-      }
-      if (found.frozen) {
-        return { error: "This account has been frozen. Please contact the administrator." };
-      }
-      setUserId(found.id);
-      await saveJSON("session", found.id);
+      const { data, error } = await api("/auth/login", { method: "POST", body: { email: email.trim(), password } });
+      if (error) return { error };
+      await startSession(data.token, data.user);
       return { error: null };
     },
-    [users]
+    [startSession]
   );
 
-  // `form` is already validated by the sign-up screen.
+  // `form` is already validated by the sign-up screen; the server checks it again.
   const signUp = useCallback(
     async (form) => {
-      const email = form.email.trim().toLowerCase();
-      if (users.some((u) => u.email.toLowerCase() === email)) {
-        return { error: "An account with this email already exists." };
-      }
-      if (users.some((u) => u.universityId === form.universityId.trim())) {
-        return { error: "An account with this ID already exists." };
-      }
-      const newUser = {
-        id: makeId(),
-        fullName: form.fullName.trim(),
-        email,
-        password: form.password,
-        universityId: form.universityId.trim(),
-        faculty: form.faculty.trim(),
-        phone: form.phone.trim(),
-        role: "user", // sign-up can never create an admin
-        frozen: false,
-        createdAt: new Date().toISOString(),
-        savedLocations: [],
-      };
-      persistUsers([...users, newUser]);
-      setUserId(newUser.id);
-      await saveJSON("session", newUser.id);
+      const { data, error, fields } = await api("/auth/signup", { method: "POST", body: form });
+      if (error) return { error, fields };
+      await startSession(data.token, data.user);
       return { error: null };
     },
-    [users, persistUsers]
+    [startSession]
   );
 
-  const logout = useCallback(async () => {
-    setUserId(null);
-    await removeKey("session");
-  }, []);
+  const logout = useCallback(() => endSession(null), [endSession]);
 
-  const updateUser = useCallback(
-    (changes) => {
-      persistUsers(users.map((u) => (u.id === userId ? { ...u, ...changes } : u)));
+  // Edit your own name / phone / faculty.
+  const updateProfile = useCallback(
+    async (changes) => {
+      const { data, error, fields } = await request("/auth/me", { method: "PATCH", body: changes });
+      if (error) return { error, fields };
+      setUser(data.user);
+      return { error: null };
     },
-    [users, userId, persistUsers]
+    [request]
   );
-
-  // A frozen or deleted account behaves like a logged-out one.
-  const storedCurrent = users.find((u) => u.id === userId);
-  const currentUser = storedCurrent && !storedCurrent.frozen ? storedCurrent : undefined;
-  const isAdmin = currentUser?.role === "admin";
 
   const addLocation = useCallback(
-    (location) => {
-      if (!currentUser) return;
-      updateUser({ savedLocations: [...currentUser.savedLocations, { id: makeId(), ...location }] });
+    async (location) => {
+      const { data, error, fields } = await request("/locations", { method: "POST", body: location });
+      if (error) return { error, fields };
+      setUser((u) => ({ ...u, savedLocations: data.savedLocations }));
+      return { error: null };
     },
-    [currentUser, updateUser]
+    [request]
   );
 
   const removeLocation = useCallback(
-    (locationId) => {
-      if (!currentUser) return;
-      updateUser({ savedLocations: currentUser.savedLocations.filter((l) => l.id !== locationId) });
+    async (locationId) => {
+      const { data, error } = await request(`/locations/${locationId}`, { method: "DELETE" });
+      if (error) return { error };
+      setUser((u) => ({ ...u, savedLocations: data.savedLocations }));
+      return { error: null };
     },
-    [currentUser, updateUser]
+    [request]
   );
 
-  /* ---------------- Admin actions (only work for admin accounts) ---------------- */
+  /* ---------------- Admin actions (the server checks that you are an admin) ---------------- */
 
-  // Shared checks for freeze / delete. Returns an error message or null.
-  const checkTarget = useCallback(
-    (targetId, action) => {
-      if (!isAdmin) return "Only admins can do this.";
-      if (!users.some((u) => u.id === targetId)) return "User not found.";
-      if (targetId === userId) return `You can't ${action} your own account.`;
-      if (targetId === ROOT_ADMIN_ID) return `The main admin account can't be ${action}d.`;
-      return null;
-    },
-    [isAdmin, users, userId]
-  );
+  const isAdmin = user?.role === "admin";
 
-  const adminUsers = useMemo(() => (isAdmin ? users.map(publicUser) : []), [isAdmin, users]);
+  const refreshUsers = useCallback(async () => {
+    const { data, error } = await request("/admin/users");
+    if (data) setAdminUsers(data.users);
+    return { error };
+  }, [request]);
+
+  // Load the accounts list as soon as an admin is logged in.
+  useEffect(() => {
+    if (isAdmin) refreshUsers();
+  }, [isAdmin, refreshUsers]);
 
   // Freeze (frozen = true) or unfreeze (frozen = false) an account.
   const setFrozen = useCallback(
-    (targetId, frozen) => {
-      const error = checkTarget(targetId, "freeze");
+    async (targetId, frozen) => {
+      const { data, error } = await request(`/admin/users/${targetId}`, { method: "PATCH", body: { frozen } });
       if (error) return { error };
-      persistUsers(users.map((u) => (u.id === targetId ? { ...u, frozen } : u)));
+      setAdminUsers((list) => list.map((u) => (u.id === targetId ? data.user : u)));
       return { error: null };
     },
-    [checkTarget, users, persistUsers]
+    [request]
   );
 
   const createAdmin = useCallback(
-    ({ fullName, email, password }) => {
-      if (!isAdmin) return { error: "Only admins can do this." };
-      const formError = validateRequired(fullName, "Name") || validateEmail(email) || validatePassword(password);
-      if (formError) return { error: formError };
-      const cleanEmail = email.trim().toLowerCase();
-      if (users.some((u) => u.email.toLowerCase() === cleanEmail)) {
-        return { error: "An account with this email already exists." };
-      }
-      const newAdmin = {
-        id: makeId(),
-        fullName: fullName.trim(),
-        email: cleanEmail,
-        password,
-        universityId: "ADMIN",
-        faculty: "Administration",
-        phone: "",
-        role: "admin",
-        frozen: false,
-        createdAt: new Date().toISOString(),
-        savedLocations: [],
-      };
-      persistUsers([...users, newAdmin]);
+    async (form) => {
+      const { data, error, fields } = await request("/admin/users", { method: "POST", body: form });
+      if (error) return { error, fields };
+      setAdminUsers((list) => [...list, data.user]);
       return { error: null };
     },
-    [isAdmin, users, persistUsers]
+    [request]
   );
 
+  // Deletes the account with its wallet history, locations and orders (on the server).
   const deleteUser = useCallback(
     async (targetId) => {
-      const error = checkTarget(targetId, "delete");
+      const { error } = await request(`/admin/users/${targetId}`, { method: "DELETE" });
       if (error) return { error };
-      persistUsers(users.filter((u) => u.id !== targetId));
-      // Also remove the user's wallet, cart and orders.
-      await Promise.all(PER_USER_KEYS.map((name) => removeKey(`user:${targetId}:${name}`)));
+      setAdminUsers((list) => list.filter((u) => u.id !== targetId));
       return { error: null };
     },
-    [checkTarget, users, persistUsers]
+    [request]
   );
 
   const value = useMemo(
     () => ({
-      user: publicUser(currentUser),
+      user,
+      token,
       booting,
+      connectionError,
+      sessionMessage,
+      retryConnection: restoreSession,
+      request,
       login,
       signUp,
       logout,
-      updateUser,
+      updateProfile,
       addLocation,
       removeLocation,
       adminUsers,
+      refreshUsers,
       setFrozen,
       createAdmin,
       deleteUser,
     }),
-    [currentUser, booting, login, signUp, logout, updateUser, addLocation, removeLocation, adminUsers, setFrozen, createAdmin, deleteUser]
+    [user, token, booting, connectionError, sessionMessage, restoreSession, request, login, signUp, logout, updateProfile, addLocation, removeLocation, adminUsers, refreshUsers, setFrozen, createAdmin, deleteUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

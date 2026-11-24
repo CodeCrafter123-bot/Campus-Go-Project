@@ -10,20 +10,34 @@ import { useOrders } from "../../context/OrdersContext";
 import { buildings } from "../../data";
 import { formatPrice } from "../../utils/pricing";
 import { locationLabel } from "../../utils/format";
-import { validateRoom, validateRequired } from "../../utils/validation";
+import {
+  FACULTIES,
+  runValidators,
+  validateFullName,
+  validatePhone,
+  validateRoom,
+  validateRequired,
+} from "../../utils/validation";
 import { colors, radius, spacing } from "../../theme/colors";
 import { showAlert } from "../../utils/dialog";
 
 const EMPTY_LOCATION = { label: "", buildingId: null, room: "" };
 
 export default function ProfileScreen({ navigation }) {
-  const { user, logout, addLocation, removeLocation } = useAuth();
+  const { user, logout, addLocation, removeLocation, updateProfile } = useAuth();
   const { balance } = useWallet();
   const { orders } = useOrders();
 
   const [adding, setAdding] = useState(false);
   const [location, setLocation] = useState(EMPTY_LOCATION);
   const [errors, setErrors] = useState({});
+  const [savingLocation, setSavingLocation] = useState(false);
+
+  // Edit profile (name, phone, faculty). Email and ID can't be changed.
+  const [editing, setEditing] = useState(false);
+  const [profile, setProfile] = useState(null);
+  const [profileErrors, setProfileErrors] = useState({});
+  const [savingProfile, setSavingProfile] = useState(false);
 
   const initials = user.fullName
     .split(" ")
@@ -34,7 +48,7 @@ export default function ProfileScreen({ navigation }) {
   const delivered = orders.filter((o) => o.status === "delivered").length;
   const isStaff = user.universityId.startsWith("ST");
 
-  const saveLocation = () => {
+  const saveLocation = async () => {
     const found = {};
     const labelError = validateRequired(location.label, "Name");
     if (labelError) found.label = labelError;
@@ -44,7 +58,18 @@ export default function ProfileScreen({ navigation }) {
     setErrors(found);
     if (Object.keys(found).length > 0) return;
 
-    addLocation({ label: location.label.trim(), buildingId: location.buildingId, room: location.room.trim().toUpperCase() });
+    setSavingLocation(true);
+    const { error, fields } = await addLocation({
+      label: location.label.trim(),
+      buildingId: location.buildingId,
+      room: location.room.trim().toUpperCase(),
+    });
+    setSavingLocation(false);
+    if (error) {
+      if (fields) setErrors(fields);
+      else showAlert("Could not save", error);
+      return;
+    }
     setLocation(EMPTY_LOCATION);
     setAdding(false);
   };
@@ -52,11 +77,47 @@ export default function ProfileScreen({ navigation }) {
   const confirmRemove = (loc) =>
     showAlert("Remove location?", `${loc.label} – ${locationLabel(loc.buildingId, loc.room)}`, [
       { text: "Cancel", style: "cancel" },
-      { text: "Remove", style: "destructive", onPress: () => removeLocation(loc.id) },
+      {
+        text: "Remove",
+        style: "destructive",
+        onPress: async () => {
+          const { error } = await removeLocation(loc.id);
+          if (error) showAlert("Could not remove", error);
+        },
+      },
     ]);
 
+  const startEditing = () => {
+    setProfile({ fullName: user.fullName, phone: user.phone, faculty: user.faculty });
+    setProfileErrors({});
+    setEditing(true);
+  };
+
+  const saveProfile = async () => {
+    const found = runValidators({
+      fullName: () => validateFullName(profile.fullName),
+      phone: () => validatePhone(profile.phone),
+    });
+    setProfileErrors(found);
+    if (Object.keys(found).length > 0) return;
+
+    setSavingProfile(true);
+    const { error, fields } = await updateProfile({
+      fullName: profile.fullName.trim(),
+      phone: profile.phone.replace(/[\s-]/g, "").replace(/^\+961/, ""),
+      faculty: profile.faculty,
+    });
+    setSavingProfile(false);
+    if (error) {
+      if (fields) setProfileErrors(fields);
+      else showAlert("Could not save", error);
+      return;
+    }
+    setEditing(false);
+  };
+
   const confirmLogout = () =>
-    showAlert("Log out?", "Your cart and orders stay saved on this phone.", [
+    showAlert("Log out?", "Your cart stays saved on this phone.", [
       { text: "Cancel", style: "cancel" },
       { text: "Log out", style: "destructive", onPress: logout },
     ]);
@@ -71,12 +132,48 @@ export default function ProfileScreen({ navigation }) {
         <Text style={styles.name}>{user.fullName}</Text>
         <Text style={styles.role}>{isStaff ? "Staff" : "Student"} · {user.faculty}</Text>
 
-        <View style={styles.details}>
-          <DetailRow icon="card-outline" label="ID" value={user.universityId} />
-          <DetailRow icon="mail-outline" label="Email" value={user.email} />
-          <DetailRow icon="call-outline" label="Phone" value={user.phone} />
-          <DetailRow icon="school-outline" label="Faculty" value={user.faculty} />
-        </View>
+        {editing ? (
+          <View style={styles.editForm}>
+            <TextField
+              label="Full name"
+              icon="person-outline"
+              autoCapitalize="words"
+              value={profile.fullName}
+              onChangeText={(t) => setProfile((p) => ({ ...p, fullName: t }))}
+              error={profileErrors.fullName}
+            />
+            <TextField
+              label="Phone"
+              icon="call-outline"
+              keyboardType="phone-pad"
+              value={profile.phone}
+              onChangeText={(t) => setProfile((p) => ({ ...p, phone: t }))}
+              error={profileErrors.phone}
+            />
+            <Text style={styles.smallLabel}>Faculty</Text>
+            <View style={styles.chips}>
+              {FACULTIES.map((f) => (
+                <Chip key={f} label={f} selected={profile.faculty === f} onPress={() => setProfile((p) => ({ ...p, faculty: f }))} />
+              ))}
+            </View>
+            <View style={styles.addActions}>
+              <Button title="Cancel" variant="ghost" onPress={() => setEditing(false)} style={styles.flex} />
+              <Button title="Save" onPress={saveProfile} loading={savingProfile} style={styles.flex} />
+            </View>
+          </View>
+        ) : (
+          <>
+            <View style={styles.details}>
+              <DetailRow icon="card-outline" label="ID" value={user.universityId} />
+              <DetailRow icon="mail-outline" label="Email" value={user.email} />
+              <DetailRow icon="call-outline" label="Phone" value={user.phone} />
+              <DetailRow icon="school-outline" label="Faculty" value={user.faculty} />
+            </View>
+            <Pressable onPress={startEditing} hitSlop={8} style={styles.editLink}>
+              <Text style={styles.link}>Edit profile</Text>
+            </Pressable>
+          </>
+        )}
       </View>
 
       {/* Wallet shortcut */}
@@ -153,7 +250,7 @@ export default function ProfileScreen({ navigation }) {
               }}
               style={styles.flex}
             />
-            <Button title="Save" onPress={saveLocation} style={styles.flex} />
+            <Button title="Save" onPress={saveLocation} loading={savingLocation} style={styles.flex} />
           </View>
         </View>
       ) : null}
@@ -225,6 +322,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 22, fontWeight: "800", color: colors.text, marginTop: spacing.md },
   role: { color: colors.textMuted, marginTop: 2 },
   details: { alignSelf: "stretch", marginTop: spacing.lg },
+  editForm: { alignSelf: "stretch", marginTop: spacing.lg },
+  editLink: { marginTop: spacing.md },
   detailRow: {
     flexDirection: "row",
     alignItems: "center",

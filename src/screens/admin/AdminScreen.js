@@ -28,7 +28,17 @@ const validate = (v) =>
   });
 
 export default function AdminScreen() {
-  const { user, adminUsers, setFrozen, createAdmin, deleteUser } = useAuth();
+  const { user, adminUsers, refreshUsers, setFrozen, createAdmin, deleteUser } = useAuth();
+  const [saving, setSaving] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pull down the list to reload the accounts from the server.
+  const onRefresh = async () => {
+    setRefreshing(true);
+    const { error } = await refreshUsers();
+    setRefreshing(false);
+    if (error) showAlert("Could not refresh", error);
+  };
   const navigation = useNavigation();
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
@@ -58,14 +68,20 @@ export default function AdminScreen() {
     setErrors({});
     setSubmitted(false);
   };
-  const handleCreate = () => {
+  const handleCreate = async () => {
     setSubmitted(true);
     const found = validate(form);
     setErrors(found);
     if (Object.keys(found).length > 0) return;
-    const { error } = createAdmin(form);
+    setSaving(true);
+    const { error, fields } = await createAdmin({
+      fullName: form.fullName.trim(),
+      email: form.email.trim().toLowerCase(),
+      password: form.password,
+    });
+    setSaving(false);
     if (error) {
-      setErrors({ email: error });
+      setErrors(fields || { email: error });
       return;
     }
     setNotice(`Admin account created for ${form.email.trim().toLowerCase()}.`);
@@ -83,8 +99,8 @@ export default function AdminScreen() {
         {
           text: freezing ? "Freeze" : "Unfreeze",
           style: freezing ? "destructive" : "default",
-          onPress: () => {
-            const { error } = setFrozen(target.id, freezing);
+          onPress: async () => {
+            const { error } = await setFrozen(target.id, freezing);
             if (error) showAlert("Not allowed", error);
             else setNotice(`${target.fullName} was ${freezing ? "frozen" : "unfrozen"}.`);
           },
@@ -93,7 +109,7 @@ export default function AdminScreen() {
     );
   };
   const confirmDelete = (target) =>
-    showAlert("Delete user?", `${target.fullName} (${target.email}) and all their wallet, cart and order data will be permanently deleted.`, [
+    showAlert("Delete user?", `${target.fullName} (${target.email}) and all their wallet, saved locations and order data will be permanently deleted.`, [
       { text: "Cancel", style: "cancel" },
       {
         text: "Delete",
@@ -162,7 +178,7 @@ export default function AdminScreen() {
           />
           <View style={styles.formActions}>
             <Button title="Cancel" variant="ghost" onPress={closeForm} style={styles.flex} />
-            <Button title="Create admin" icon="person-add-outline" onPress={handleCreate} style={styles.flex} />
+            <Button title="Create admin" icon="person-add-outline" onPress={handleCreate} loading={saving} style={styles.flex} />
           </View>
         </View>
       ) : (
@@ -196,6 +212,8 @@ export default function AdminScreen() {
         ListHeaderComponent={header}
         ListEmptyComponent={<EmptyState icon="people-outline" title="No users found" message="Try a different search." />}
         keyboardShouldPersistTaps="handled"
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         renderItem={({ item }) => (
           <UserRow
             item={item}

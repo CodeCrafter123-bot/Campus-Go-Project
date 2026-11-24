@@ -1,4 +1,6 @@
 import { ActivityIndicator, View } from "react-native";
+import EmptyState from "../components/EmptyState";
+import Button from "../components/Button";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
 import { colors } from "../theme/colors";
@@ -18,12 +20,23 @@ const Stack = createNativeStackNavigator();
 // - user       → the normal CampusGo tabs
 // Logging in/out switches automatically – no manual navigation needed.
 export default function RootNavigator() {
-  const { user, booting } = useAuth();
+  const { user, booting, connectionError, retryConnection } = useAuth();
 
   if (booting) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
+  // A login was saved but the server can't be reached (backend off or wrong Wi-Fi).
+  if (connectionError && !user) {
+    return (
+      <View style={{ flex: 1, justifyContent: "center", backgroundColor: colors.background }}>
+        <EmptyState icon="cloud-offline-outline" title="No connection" message={connectionError}>
+          <Button title="Try again" icon="refresh" onPress={retryConnection} />
+        </EmptyState>
       </View>
     );
   }

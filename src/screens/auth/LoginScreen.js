@@ -6,6 +6,7 @@ import TextField from "../../components/TextField";
 import Button from "../../components/Button";
 import { useAuth } from "../../context/AuthContext";
 import { validateEmail, validateRequired, runValidators } from "../../utils/validation";
+import { API_URL } from "../../api/config";
 import { colors, radius, spacing } from "../../theme/colors";
 
 const validate = (values) =>
@@ -15,11 +16,12 @@ const validate = (values) =>
   });
 
 export default function LoginScreen({ navigation }) {
-  const { login } = useAuth();
+  const { login, sessionMessage } = useAuth();
   const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [submitted, setSubmitted] = useState(false); // show live errors only after the first try
-  const [loginError, setLoginError] = useState(null);
+  // Starts with the reason of the last logout, e.g. "This account has been frozen…"
+  const [loginError, setLoginError] = useState(sessionMessage);
   const [loading, setLoading] = useState(false);
 
   // Updates a field and re-validates if the user already pressed "Log in".
@@ -91,6 +93,7 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.demoText}>Student: demo@ua.edu.lb · campus123</Text>
         <Text style={styles.demoText}>Admin: admin@ua.edu.lb · admin123</Text>
       </View>
+      <Text style={styles.serverText}>Server: {API_URL}</Text>
     </FormContainer>
   );
 }
@@ -120,4 +123,5 @@ const styles = StyleSheet.create({
   },
   demoTitle: { fontWeight: "700", color: colors.primary },
   demoText: { color: colors.text, marginTop: 2 },
+  serverText: { color: colors.textMuted, fontSize: 12, textAlign: "center", marginTop: spacing.md },
 });
