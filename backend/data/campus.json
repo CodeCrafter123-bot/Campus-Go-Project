@@ -1,0 +1,151 @@
+{
+  "settings": {
+    "currency": "$",
+    "minimumOrder": 2,
+    "deliveryFee": 0.5,
+    "freeDeliveryFrom": 10,
+    "deliveryBufferMinutes": 5,
+    "initialWalletBalance": 20,
+    "emailDomain": "@ua.edu.lb"
+    
+  },
+
+  "stores": [
+    {
+      "id": "cafeteria",
+      "name": "Cafeteria",
+      "category": "Food",
+      "icon": "restaurant",
+      "color": "#ef4444",
+      "description": "Fresh sandwiches, salads and hot meals.",
+      "avgPrepMinutes": 15,
+      "openingHours": {
+        "sun": null,
+        "mon": { "open": "07:30", "close": "16:00" },
+        "tue": { "open": "07:30", "close": "16:00" },
+        "wed": { "open": "07:30", "close": "16:00" },
+        "thu": { "open": "07:30", "close": "16:00" },
+        "fri": { "open": "07:30", "close": "16:00" },
+        "sat": { "open": "08:00", "close": "13:00" }
+      }
+    },
+    {
+      "id": "coffee",
+      "name": "Coffee Corner",
+      "category": "Drinks",
+      "icon": "cafe",
+      "color": "#92400e",
+      "description": "Coffee, tea and fresh pastries.",
+      "avgPrepMinutes": 7,
+      "openingHours": {
+        "sun": null,
+        "mon": { "open": "07:00", "close": "18:00" },
+        "tue": { "open": "07:00", "close": "18:00" },
+        "wed": { "open": "07:00", "close": "18:00" },
+        "thu": { "open": "07:00", "close": "18:00" },
+        "fri": { "open": "07:00", "close": "18:00" },
+        "sat": { "open": "08:00", "close": "14:00" }
+      }
+    },
+    {
+      "id": "bookstore",
+      "name": "Bookstore & Stationery",
+      "category": "Stationery",
+      "icon": "book",
+      "color": "#7c3aed",
+      "description": "Notebooks, pens and everything for your classes.",
+      "avgPrepMinutes": 10,
+      "openingHours": {
+        "sun": null,
+        "mon": { "open": "08:30", "close": "15:00" },
+        "tue": { "open": "08:30", "close": "15:00" },
+        "wed": { "open": "08:30", "close": "15:00" },
+        "thu": { "open": "08:30", "close": "15:00" },
+        "fri": { "open": "08:30", "close": "15:00" },
+        "sat": null
+      }
+    },
+    {
+      "id": "printing",
+      "name": "Printing Office",
+      "category": "Printing",
+      "icon": "print",
+      "color": "#0891b2",
+      "description": "Print, bind and scan your documents.",
+      "avgPrepMinutes": 20,
+      "openingHours": {
+        "sun": null,
+        "mon": { "open": "08:00", "close": "17:00" },
+        "tue": { "open": "08:00", "close": "17:00" },
+        "wed": { "open": "08:00", "close": "17:00" },
+        "thu": { "open": "08:00", "close": "17:00" },
+        "fri": { "open": "08:00", "close": "17:00" },
+        "sat": { "open": "08:00", "close": "12:00" }
+      }
+    }
+  ],
+
+  "products": [
+    { "id": "caf-1", "storeId": "cafeteria", "category": "Sandwiches", "name": "Chicken Sub", "image": "🥖", "price": 4.5, "inStock": true, "description": "Grilled chicken, lettuce, tomato and garlic sauce.", "options": { "sizes": [ { "label": "Regular", "extra": 0 }, { "label": "Large", "extra": 1.5 } ], "extras": [ { "label": "Cheese", "price": 0.5 }, { "label": "Fries inside", "price": 0.75 } ] } },
+    { "id": "caf-2", "storeId": "cafeteria", "category": "Sandwiches", "name": "Halloumi Sandwich", "image": "🥪", "price": 3.75, "inStock": true, "description": "Grilled halloumi, tomato, mint and cucumber.", "options": { "sizes": [], "extras": [ { "label": "Olives", "price": 0.25 } ] } },
+    { "id": "caf-3", "storeId": "cafeteria", "category": "Sandwiches", "name": "Tuna Sandwich", "image": "🥪", "price": 3.5, "inStock": false, "description": "Tuna, corn, lettuce and mayo.", "options": { "sizes": [], "extras": [] } },
+    { "id": "caf-4", "storeId": "cafeteria", "category": "Sandwiches", "name": "Labneh Wrap", "image": "🌯", "price": 2.5, "inStock": true, "description": "Labneh, cucumber, mint and olives.", "options": { "sizes": [], "extras": [ { "label": "Za'atar", "price": 0.25 } ] } },
+    { "id": "caf-5", "storeId": "cafeteria", "category": "Salads", "name": "Caesar Salad", "image": "🥗", "price": 5, "inStock": true, "description": "Romaine, croutons, parmesan and caesar dressing.", "options": { "sizes": [], "extras": [ { "label": "Grilled chicken", "price": 1.5 } ] } },
+    { "id": "caf-6", "storeId": "cafeteria", "category": "Salads", "name": "Fattoush", "image": "🥗", "price": 4, "inStock": true, "description": "Mixed vegetables, crispy bread and pomegranate molasses.", "options": { "sizes": [], "extras": [] } },
+    { "id": "caf-7", "storeId": "cafeteria", "category": "Hot Meals", "name": "Pasta Bolognese", "image": "🍝", "price": 6, "inStock": true, "description": "Penne with homemade beef bolognese sauce.", "options": { "sizes": [ { "label": "Regular", "extra": 0 }, { "label": "Large", "extra": 2 } ], "extras": [ { "label": "Extra parmesan", "price": 0.5 } ] } },
+    { "id": "caf-8", "storeId": "cafeteria", "category": "Cold Drinks", "name": "Water Bottle", "image": "💧", "price": 0.5, "inStock": true, "description": "500 ml mineral water.", "options": { "sizes": [], "extras": [] } },
+    { "id": "caf-9", "storeId": "cafeteria", "category": "Cold Drinks", "name": "Fresh Orange Juice", "image": "🍊", "price": 2, "inStock": true, "description": "Freshly squeezed orange juice.", "options": { "sizes": [], "extras": [] } },
+
+    { "id": "cof-1", "storeId": "coffee", "category": "Hot Drinks", "name": "Espresso", "image": "☕", "price": 1.5, "inStock": true, "description": "Single shot of our house blend.", "options": { "sizes": [ { "label": "Single", "extra": 0 }, { "label": "Double", "extra": 0.75 } ], "extras": [] } },
+    { "id": "cof-2", "storeId": "coffee", "category": "Hot Drinks", "name": "Cappuccino", "image": "☕", "price": 2.75, "inStock": true, "description": "Espresso with steamed milk foam.", "options": { "sizes": [ { "label": "Small", "extra": 0 }, { "label": "Medium", "extra": 0.5 }, { "label": "Large", "extra": 1 } ], "extras": [ { "label": "Extra shot", "price": 0.75 }, { "label": "Oat milk", "price": 0.5 }, { "label": "Vanilla syrup", "price": 0.5 } ] } },
+    { "id": "cof-3", "storeId": "coffee", "category": "Hot Drinks", "name": "Caffè Latte", "image": "🥛", "price": 3, "inStock": true, "description": "Espresso with lots of steamed milk.", "options": { "sizes": [ { "label": "Small", "extra": 0 }, { "label": "Medium", "extra": 0.5 }, { "label": "Large", "extra": 1 } ], "extras": [ { "label": "Extra shot", "price": 0.75 }, { "label": "Caramel syrup", "price": 0.5 } ] } },
+    { "id": "cof-4", "storeId": "coffee", "category": "Hot Drinks", "name": "Tea", "image": "🍵", "price": 1, "inStock": true, "description": "Black, green or mint tea.", "options": { "sizes": [], "extras": [ { "label": "Lemon", "price": 0 }, { "label": "Honey", "price": 0.25 } ] } },
+    { "id": "cof-5", "storeId": "coffee", "category": "Hot Drinks", "name": "Hot Chocolate", "image": "🍫", "price": 2.5, "inStock": false, "description": "Rich chocolate with steamed milk.", "options": { "sizes": [], "extras": [ { "label": "Whipped cream", "price": 0.5 } ] } },
+    { "id": "cof-6", "storeId": "coffee", "category": "Cold Drinks", "name": "Iced Latte", "image": "🧋", "price": 3.25, "inStock": true, "description": "Espresso and cold milk over ice.", "options": { "sizes": [ { "label": "Medium", "extra": 0 }, { "label": "Large", "extra": 0.75 } ], "extras": [ { "label": "Vanilla syrup", "price": 0.5 } ] } },
+    { "id": "cof-7", "storeId": "coffee", "category": "Cold Drinks", "name": "Caramel Frappé", "image": "🥤", "price": 3.75, "inStock": true, "description": "Blended iced coffee with caramel.", "options": { "sizes": [], "extras": [ { "label": "Whipped cream", "price": 0.5 } ] } },
+    { "id": "cof-8", "storeId": "coffee", "category": "Pastries", "name": "Butter Croissant", "image": "🥐", "price": 1.75, "inStock": true, "description": "Freshly baked every morning.", "options": { "sizes": [], "extras": [ { "label": "Chocolate filling", "price": 0.5 }, { "label": "Za'atar", "price": 0.25 } ] } },
+    { "id": "cof-9", "storeId": "coffee", "category": "Pastries", "name": "Blueberry Muffin", "image": "🧁", "price": 2, "inStock": true, "description": "Soft muffin with real blueberries.", "options": { "sizes": [], "extras": [] } },
+
+    { "id": "book-1", "storeId": "bookstore", "category": "Notebooks", "name": "A4 Notebook (100 pages)", "image": "📓", "price": 2.5, "inStock": true, "description": "Ruled A4 notebook with UA cover.", "options": { "sizes": [], "extras": [] } },
+    { "id": "book-2", "storeId": "bookstore", "category": "Notebooks", "name": "A5 Spiral Notebook", "image": "📒", "price": 1.75, "inStock": true, "description": "Small spiral notebook, 80 pages.", "options": { "sizes": [], "extras": [] } },
+    { "id": "book-3", "storeId": "bookstore", "category": "Writing", "name": "Blue Pens (pack of 5)", "image": "🖊️", "price": 1.5, "inStock": true, "description": "Smooth ballpoint pens.", "options": { "sizes": [], "extras": [] } },
+    { "id": "book-4", "storeId": "bookstore", "category": "Writing", "name": "Highlighters (4 colors)", "image": "🖍️", "price": 2.25, "inStock": true, "description": "Yellow, green, pink and orange.", "options": { "sizes": [], "extras": [] } },
+    { "id": "book-5", "storeId": "bookstore", "category": "Writing", "name": "Pencil & Eraser Set", "image": "✏️", "price": 1, "inStock": true, "description": "HB pencil, eraser and sharpener.", "options": { "sizes": [], "extras": [] } },
+    { "id": "book-6", "storeId": "bookstore", "category": "Supplies", "name": "Scientific Calculator", "image": "🧮", "price": 15, "inStock": false, "description": "Approved for exams.", "options": { "sizes": [], "extras": [] } },
+    { "id": "book-7", "storeId": "bookstore", "category": "Supplies", "name": "USB Flash Drive 32GB", "image": "💾", "price": 7, "inStock": true, "description": "USB 3.0 flash drive.", "options": { "sizes": [ { "label": "32GB", "extra": 0 }, { "label": "64GB", "extra": 4 } ], "extras": [] } },
+    { "id": "book-8", "storeId": "bookstore", "category": "Supplies", "name": "Lab Coat", "image": "🥼", "price": 12, "inStock": true, "description": "White cotton lab coat.", "options": { "sizes": [ { "label": "S", "extra": 0 }, { "label": "M", "extra": 0 }, { "label": "L", "extra": 0 }, { "label": "XL", "extra": 0 } ], "extras": [] } },
+
+    { "id": "print-1", "storeId": "printing", "category": "Services", "name": "Scan to PDF", "image": "🖨️", "price": 0.1, "inStock": true, "description": "Price per scanned page, sent to your email.", "options": { "sizes": [], "extras": [] } },
+    { "id": "print-2", "storeId": "printing", "category": "Services", "name": "A3 Poster Print", "image": "🖼️", "price": 3, "inStock": true, "description": "Color A3 poster print.", "options": { "sizes": [], "extras": [ { "label": "Lamination", "price": 1 } ] } },
+    { "id": "print-3", "storeId": "printing", "category": "Services", "name": "Lamination (A4)", "image": "📄", "price": 0.75, "inStock": true, "description": "Per A4 sheet.", "options": { "sizes": [], "extras": [] } }
+  ],
+
+  "buildings": [
+    { "id": "A", "name": "Building A – Administration" },
+    { "id": "B", "name": "Building B – Engineering" },
+    { "id": "C", "name": "Building C – Business" },
+    { "id": "D", "name": "Building D – Sciences & Labs" },
+    { "id": "E", "name": "Building E – Arts & Music" },
+    { "id": "F", "name": "Building F – Library" }
+  ],
+
+  "deliverySlots": [
+    { "id": "s1", "start": "08:15", "end": "08:30" },
+    { "id": "s2", "start": "09:45", "end": "10:00" },
+    { "id": "s3", "start": "11:15", "end": "11:30" },
+    { "id": "s4", "start": "12:45", "end": "13:30" },
+    { "id": "s5", "start": "14:45", "end": "15:00" },
+    { "id": "s6", "start": "16:15", "end": "16:30" }
+  ],
+
+  "printPricing": {
+    "bw": 0.05,
+    "color": 0.25,
+    "doubleSidedDiscount": 0.1,
+    "binding": { "none": 0, "staple": 0.25, "spiral": 1.5 },
+    "maxPages": 200,
+    "maxCopies": 50
+  },
+
+  "couriers": ["Karim", "Maya", "Elie", "Rita", "Joe"]
+}
