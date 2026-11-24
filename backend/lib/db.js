@@ -197,6 +197,12 @@ function openDatabase() {
   return db;
 }
 
+// Reads one JSON value from the settings table ("settings", "printPricing", "couriers").
+export function getSetting(key) {
+  const row = getDb().prepare("SELECT value FROM settings WHERE key = ?").get(key);
+  return row ? JSON.parse(row.value) : null;
+}
+
 // One shared connection. Kept on globalThis so hot reload in `next dev`
 // does not open a new connection every time a file changes.
 export function getDb() {
