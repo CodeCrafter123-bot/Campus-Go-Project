@@ -1,7 +1,7 @@
 import { Pressable, Text, StyleSheet } from "react-native";
 import { colors, radius, spacing } from "../theme/colors";
 
-// Small selectable pill, used for filters and option pickers.
+// small rounded component used for filters and option pickers 
 export default function Chip({ label, selected = false, onPress, disabled = false, style }) {
   return (
     <Pressable
@@ -15,7 +15,7 @@ export default function Chip({ label, selected = false, onPress, disabled = fals
     </Pressable>
   );
 }
-
+//screen tells whether it selected or no and what to do when tapped it also updates colors and styles 
 const styles = StyleSheet.create({
   chip: {
     paddingVertical: spacing.sm,

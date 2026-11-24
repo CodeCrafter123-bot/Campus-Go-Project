@@ -1,7 +1,10 @@
 // Time helpers: opening hours and delivery-slot availability.
 const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
-
+//this file to answer if the store open right now 
+//can the customer choose this delivery slot 
 // "09:45" -> 585 (minutes since midnight)
+
+//convert between clock time and  minutes 
 export function toMinutes(hhmm) {
   const [h, m] = hhmm.split(":").map(Number);
   return h * 60 + m;
@@ -15,7 +18,7 @@ export function fromMinutes(total) {
 }
 
 export const minutesOfDay = (date = new Date()) => date.getHours() * 60 + date.getMinutes();
-
+//find today hours and decide if the store is open 
 export const getTodayHours = (store, date = new Date()) => store.openingHours[DAY_KEYS[date.getDay()]];
 
 // True when the store is open at `date`.

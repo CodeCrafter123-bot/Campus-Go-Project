@@ -2,7 +2,9 @@ import { Pressable, Text, ActivityIndicator, StyleSheet, View } from "react-nati
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, spacing } from "../theme/colors";
 
-// variant: "primary" | "outline" | "danger" | "ghost"
+// reusable button used anywhere with its style 
+
+//props of the button title on what to do on pressed on what to handle 
 export default function Button({ title, onPress, variant = "primary", icon, loading = false, disabled = false, style, textColor }) {
   const isDisabled = disabled || loading;
   const v = { ...VARIANTS[variant], ...(textColor && { text: textColor }) };
@@ -31,7 +33,7 @@ export default function Button({ title, onPress, variant = "primary", icon, load
     </Pressable>
   );
 }
-
+//styles and  variants 
 const VARIANTS = {
   primary: { bg: colors.primary, border: colors.primary, text: colors.white },
   outline: { bg: "transparent", border: colors.primary, text: colors.primary },

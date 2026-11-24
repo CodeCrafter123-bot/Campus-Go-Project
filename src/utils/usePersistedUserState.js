@@ -9,6 +9,9 @@ import { loadJSON, saveJSON } from "./storage";
  * Returns [value, setValue, ready]. `ready` is false while loading.
  * `initialValue` must be a constant (defined outside the component).
  */
+
+
+//it saves the value to asyncstorage and each user gets its own saved values 
 export default function usePersistedUserState(name, userId, initialValue) {
   // `owner` remembers which user the value belongs to, so we never save
   // one user's data under another user's key while switching accounts.

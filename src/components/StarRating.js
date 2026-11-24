@@ -2,9 +2,10 @@ import { View, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors } from "../theme/colors";
 
-// 1–5 stars. Read-only when `onChange` is not given.
+// renders five stars screen using it to display existing rating 
 export default function StarRating({ value, onChange, size = 32 }) {
   return (
+    //using th emap craetes one pressable for each number 
     <View style={styles.row}>
       {[1, 2, 3, 4, 5].map((star) => (
         <Pressable
@@ -24,6 +25,7 @@ export default function StarRating({ value, onChange, size = 32 }) {
       ))}
     </View>
   );
+  //display five icons and fill all the stars where number less than or equal to the current rating 
 }
 
 const styles = StyleSheet.create({

@@ -4,19 +4,22 @@ import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../context/CartContext";
 import { colors } from "../theme/colors";
 
-// Cart icon with item-count badge, shown in the header of the store screens.
+// Component to display the cart icon in the store header 
 export default function CartHeaderButton() {
   const navigation = useNavigation();
-  const { itemCount } = useCart();
+  const { itemCount } = useCart();//reads current item count 
 
   return (
+    //what happens when user presses the cart icon 
     <Pressable
       onPress={() => navigation.navigate("CartTab", { screen: "Cart" })}
       hitSlop={10}
       accessibilityLabel={`Cart, ${itemCount} items`}
-    >
+    > 
+  
       <Ionicons name="cart-outline" size={26} color={colors.white} />
       {itemCount > 0 ? (
+        //how they are displayed 
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{itemCount > 99 ? "99+" : itemCount}</Text>
         </View>

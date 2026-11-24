@@ -3,6 +3,8 @@
 const BINDING_LABELS = { none: "No binding", staple: "Stapled", spiral: "Spiral binding" };
 
 // "Large, Extra shot, Oat milk" or "12 pages · Color · Double-sided · Spiral binding"
+
+//check whether the item is print order with print setting 
 export function describeItem(item) {
   if (item.type === "print" && item.printJob) {
     const j = item.printJob;
@@ -17,6 +19,7 @@ export function describeItem(item) {
 }
 
 // "Mon 16 Nov, 10:42"
+//convert the date into js date using a function 
 export function formatDateTime(iso) {
   const d = new Date(iso);
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -24,11 +27,12 @@ export function formatDateTime(iso) {
   const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
   return `${days[d.getDay()]} ${d.getDate()} ${months[d.getMonth()]}, ${time}`;
 }
-
+//function that shows only the time 
 export const formatTime = (iso) => {
   const d = new Date(iso);
   return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 };
 
 // "Building B, Room 204"
+//shows the location 
 export const locationLabel = (buildingId, room) => `Building ${buildingId}, Room ${room}`;

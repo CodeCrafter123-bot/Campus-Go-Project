@@ -2,9 +2,11 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const PREFIX = "campusgo:";
+//this file helps to save load and delete data on the current device 
 
 export async function loadJSON(key, fallback = null) {
   try {
+    //convert data to text and saves it
     const raw = await AsyncStorage.getItem(PREFIX + key);
     return raw != null ? JSON.parse(raw) : fallback;
   } catch (e) {
@@ -15,12 +17,13 @@ export async function loadJSON(key, fallback = null) {
 
 export async function saveJSON(key, value) {
   try {
+    //convert array or object into json text and save it 
     await AsyncStorage.setItem(PREFIX + key, JSON.stringify(value));
   } catch (e) {
     console.warn("saveJSON failed", key, e);
   }
 }
-
+//same for readin json turns from text to data and display it 
 export async function removeKey(key) {
   try {
     await AsyncStorage.removeItem(PREFIX + key);

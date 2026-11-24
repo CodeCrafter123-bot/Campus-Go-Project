@@ -10,7 +10,7 @@ export default function StatusBadge({ open, label }) {
         {label || (open ? "Open" : "Closed")}
       </Text>
     </View>
-  );
+  );//The store screen supplies the open or closed status. StatusBadge uses that boolean to display a green or red pill with a matching dot. The screen can also supply a custom label, such as the store’s closing time.
 }
 
 const styles = StyleSheet.create({

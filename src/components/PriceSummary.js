@@ -2,9 +2,11 @@ import { View, Text, StyleSheet } from "react-native";
 import { formatPrice } from "../utils/pricing";
 import { colors, radius, spacing } from "../theme/colors";
 
-// Subtotal / delivery fee / total card.
+// displays the subtotal and del fee and final total
 export default function PriceSummary({ subtotal, deliveryFee, total, note }) {
   return (
+
+    //PriceSummary takes the amounts from the parent screen and displays them in a consistent format.
     <View style={styles.card}>
       <Line label="Subtotal" value={formatPrice(subtotal)} />
       <Line label="Delivery fee" value={deliveryFee === 0 ? "FREE" : formatPrice(deliveryFee)} highlight={deliveryFee === 0} />
@@ -17,7 +19,7 @@ export default function PriceSummary({ subtotal, deliveryFee, total, note }) {
     </View>
   );
 }
-
+//when delivery fees =0 is set to free and it becomes true highloghted 
 function Line({ label, value, highlight }) {
   return (
     <View style={styles.line}>
@@ -26,7 +28,7 @@ function Line({ label, value, highlight }) {
     </View>
   );
 }
-
+//styles 
 const styles = StyleSheet.create({
   card: { backgroundColor: colors.card, borderRadius: radius.lg, padding: spacing.lg },
   line: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingVertical: 3 },

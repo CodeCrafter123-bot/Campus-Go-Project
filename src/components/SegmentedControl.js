@@ -2,13 +2,17 @@ import { View, Text, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { colors, radius, spacing } from "../theme/colors";
 
-// Row of mutually exclusive options. options = [{ value, label, icon?, note? }]
+// displays a row of options that user can select one at a  time 
 export default function SegmentedControl({ options, value, onChange }) {
   return (
+
+    //using the map creates one pressable for each option 
     <View style={styles.row}>
       {options.map((opt) => {
         const selected = opt.value === value;
         return (
+
+          //SegmentedControl builds a button for each option.
           <Pressable
             key={String(opt.value)}
             onPress={() => onChange(opt.value)}
@@ -26,7 +30,7 @@ export default function SegmentedControl({ options, value, onChange }) {
       })}
     </View>
   );
-}
+}//It highlights the option that matches the value supplied by the parent screen. When the user taps a button, it sends that option’s value back to the parent, which updates the selection.
 
 const styles = StyleSheet.create({
   row: { flexDirection: "row", gap: spacing.sm },

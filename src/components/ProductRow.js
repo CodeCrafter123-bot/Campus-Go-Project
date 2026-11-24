@@ -3,11 +3,12 @@ import { Ionicons } from "@expo/vector-icons";
 import { formatPrice } from "../utils/pricing";
 import { colors, radius, spacing } from "../theme/colors";
 
-// One product in a store menu. Out-of-stock products are shown but greyed out.
+// renders one product on the store menu 
 export default function ProductRow({ product, onPress }) {
   const hasOptions = product.options.sizes.length > 0 || product.options.extras.length > 0;
 
   return (
+    //It uses the product’s options to decide whether to prefix the price with “from” and shows an out-of-stock label when the product is unavailable
     <Pressable
       onPress={onPress}
       style={({ pressed }) => [styles.row, !product.inStock && styles.outOfStock, pressed && styles.pressed]}

@@ -1,12 +1,14 @@
 // Money and business rules: delivery fee, minimum order, printing price.
 import { settings, printPricing } from "../data";
-
+//how much the order cost and whether it meets the ordering rules 
 export const formatPrice = (value) => `$${Number(value || 0).toFixed(2)}`;
 
 // Avoid floating-point noise like 0.30000000000000004
 export const round2 = (value) => Math.round(value * 100) / 100;
 
 // Unit price of a product with the chosen size and extras.
+
+//calculate the price of the customized product 
 export function getUnitPrice(product, size, extras = []) {
   const sizeExtra = size ? size.extra : 0;
   const extrasTotal = extras.reduce((sum, e) => sum + e.price, 0);
@@ -14,6 +16,7 @@ export function getUnitPrice(product, size, extras = []) {
 }
 
 // Free delivery from $10, otherwise $0.50 (no fee on an empty cart).
+//adds the delivery fee and return the overall price 
 export function getDeliveryFee(subtotal) {
   if (subtotal <= 0) return 0;
   return subtotal >= settings.freeDeliveryFrom ? 0 : settings.deliveryFee;
@@ -36,6 +39,13 @@ export function getOrderTotals(subtotal) {
  * Per-page price × pages × copies (−10% when double-sided) + binding per copy.
  */
 export function calcPrintPrice({ pages, copies, color, doubleSided, binding }) {
+
+  //stpes => supppose someone need s 10 pages 3 copies color double sized spiral binding 
+  //pick the color rate 
+  //add 10% double sized 
+  //calcaulate one copy bound 
+  //calculate three copies 
+  //reteurn price per copy and the total 
   const p = Number(pages) || 0;
   const c = Number(copies) || 0;
   if (p <= 0 || c <= 0) return { perCopy: 0, total: 0 };
@@ -46,6 +56,11 @@ export function calcPrintPrice({ pages, copies, color, doubleSided, binding }) {
 }
 
 // Returns an error message or null.
+//for validation 
+//document name exist contains more than spaces 
+//page count positive 
+//copy count positive 
+//entrein double number will return error also for number of copies 
 export function validatePrintJob({ name, pages, copies }) {
   const p = Number(pages);
   const c = Number(copies);
