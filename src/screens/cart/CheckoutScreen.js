@@ -87,15 +87,16 @@ export default function CheckoutScreen({ navigation }) {
     return Object.keys(found).length === 0;
   };
 
-  const submitOrder = () => {
+  // Sends the order to the server (POST /api/orders), which checks everything again.
+  const submitOrder = async () => {
     setPlacing(true);
-    const { order, error } = placeOrder({ buildingId, room, slot: selectedSlot, paymentMethod });
+    const { order, error } = await placeOrder({ buildingId, room, slot: selectedSlot, paymentMethod });
     setPlacing(false);
     if (error) {
       showAlert("Order refused", error);
       return;
     }
-    if (saveLocation) addLocation({ label: locationName.trim(), buildingId, room: room.trim() });
+    if (saveLocation) addLocation({ label: locationName.trim(), buildingId, room: room.trim().toUpperCase() });
 
     // Reset the cart stack and open the tracking screen (with "My Orders" underneath it).
     navigation.popToTop();

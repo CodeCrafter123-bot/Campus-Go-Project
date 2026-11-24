@@ -12,33 +12,32 @@ import { describeItem, formatDateTime, locationLabel } from "../../utils/format"
 import { colors, radius, spacing } from "../../theme/colors";
 import { showAlert } from "../../utils/dialog";
 
-// Simulation: how long each status lasts before moving to the next one.
-// "received" is a bit longer so there is time to demo the Cancel button.
-const STATUS_DURATION_MS = {
-  received: 10000,
-  preparing: 8000,
-  on_the_way: 8000,
-};
+// How often the screen asks the server for the latest status.
+const POLL_INTERVAL_MS = 3000;
+const FINAL_STATUSES = ["delivered", "cancelled"];
 
 export default function OrderTrackingScreen({ navigation, route }) {
   const { orderId, justPlaced } = route.params;
-  const { getOrder, advanceStatus, cancelOrder, rateOrder } = useOrders();
+  const { getOrder, refreshOrder, cancelOrder, rateOrder } = useOrders();
   const order = getOrder(orderId);
 
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState("");
   const [ratingError, setRatingError] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [rating, setRating] = useState(false);
 
-  // Simulated tracking: after a few seconds, move the order to the next status.
-  // Runs again every time the status changes; the cleanup cancels the pending
-  // timer when the status changes, the order is cancelled or the screen is closed.
+  // Live tracking: the SERVER moves the order forward with time
+  // (Received → Preparing → On the way → Delivered). While this screen is open
+  // and the order is not finished, we ask the server every 3 seconds.
+  // The cleanup stops the timer when the order is finished or the screen is closed.
   const status = order?.status;
   useEffect(() => {
-    const duration = STATUS_DURATION_MS[status];
-    if (!duration) return; // delivered or cancelled → nothing to do
-    const timer = setTimeout(() => advanceStatus(orderId), duration);
-    return () => clearTimeout(timer);
-  }, [status, orderId, advanceStatus]);
+    if (FINAL_STATUSES.includes(status)) return; // delivered or cancelled → nothing to do
+    refreshOrder(orderId); // immediately, then every 3 s
+    const timer = setInterval(() => refreshOrder(orderId), POLL_INTERVAL_MS);
+    return () => clearInterval(timer);
+  }, [status, orderId, refreshOrder]);
 
   if (!order) {
     return (
@@ -62,20 +61,25 @@ export default function OrderTrackingScreen({ navigation, route }) {
         {
           text: "Cancel order",
           style: "destructive",
-          onPress: () => {
-            const { error } = cancelOrder(order.id);
+          onPress: async () => {
+            setCancelling(true);
+            const { error } = await cancelOrder(order.id);
+            setCancelling(false);
             if (error) showAlert("Too late", error);
           },
         },
       ]
     );
 
-  const handleRate = () => {
+  const handleRate = async () => {
     if (stars === 0) {
       setRatingError("Please choose 1 to 5 stars.");
       return;
     }
-    rateOrder(order.id, stars, comment);
+    setRating(true);
+    const { error } = await rateOrder(order.id, stars, comment);
+    setRating(false);
+    if (error) setRatingError(error);
   };
 
   const header = (
@@ -126,7 +130,7 @@ export default function OrderTrackingScreen({ navigation, route }) {
       )}
 
       {order.status === "received" ? (
-        <Button title="Cancel order" variant="outline" icon="close-circle-outline" onPress={handleCancel} style={styles.cancelButton} textColor={colors.danger} />
+        <Button title="Cancel order" variant="outline" icon="close-circle-outline" onPress={handleCancel} loading={cancelling} style={styles.cancelButton} textColor={colors.danger} />
       ) : null}
 
       <Text style={styles.sectionTitle}>{order.storeName}</Text>
@@ -169,7 +173,7 @@ export default function OrderTrackingScreen({ navigation, route }) {
                 maxLength={200}
                 style={styles.commentField}
               />
-              <Button title="Submit rating" onPress={handleRate} />
+              <Button title="Submit rating" onPress={handleRate} loading={rating} />
             </>
           )}
         </View>
@@ -182,7 +186,7 @@ export default function OrderTrackingScreen({ navigation, route }) {
       style={styles.container}
       contentContainerStyle={styles.content}
       data={order.items}
-      keyExtractor={(item) => item.key}
+      keyExtractor={(item, index) => item.key || `${item.productId}-${index}`}
       ListHeaderComponent={header}
       ListFooterComponent={footer}
       renderItem={({ item }) => (

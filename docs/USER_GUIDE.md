@@ -25,8 +25,12 @@ This guide explains how to use CampusGo, the campus delivery app of Université 
 ## 1. Opening the app
 
 1. Install **Expo Go** from the Play Store / App Store.
-2. On the computer, run `npx expo start` in the project folder.
-3. Scan the QR code (Expo Go on Android, Camera app on iOS).
+2. On the computer, start the **backend**: `cd backend` then `npm run dev` (keep this terminal open).
+3. In a second terminal, in the project folder, run `npx expo start`.
+4. Scan the QR code (Expo Go on Android, Camera app on iOS). The phone must be on the same Wi-Fi as the computer.
+
+Your account, wallet and orders are saved on the CampusGo server, so you find them again on any phone.
+The bottom of the **Log in** screen shows the server address the app is using.
 
 The **Welcome** screen shows the CampusGo logo, a short introduction and two buttons: **Log in** and **Create an account**.
 
@@ -166,7 +170,7 @@ The tracking screen shows:
 - the **status**, the **delivery location**, the **estimated delivery** (your slot), the **courier** and the payment method
 - a **timeline**: Received → Preparing → On the way → **Delivered to Building X, Room Y**, with the time of each step
 
-The status moves forward automatically every few seconds (simulation) while this screen is open.
+The status moves forward automatically (simulation: about 10 seconds per step), even if you close the app; this screen updates itself every few seconds.
 
 - **Cancel order** – only available while the order is still **Received**. If you paid with the wallet, the money is refunded.
 - **Rate your order** – after delivery, choose 1 to 5 ★, add an optional comment and tap **Submit rating**.
@@ -175,7 +179,7 @@ The status moves forward automatically every few seconds (simulation) while this
 
 ## 9. Your orders and reordering
 
-The **Orders** tab lists all your orders (newest first) with date, store, items, total and status.
+The **Orders** tab lists all your orders (newest first) with date, store, items, total and status. Pull down to refresh.
 
 - Filter by **store** and/or **status** (In progress, Delivered, Cancelled).
 - Tap an order to see its details / tracking.
@@ -187,13 +191,15 @@ The **Orders** tab lists all your orders (newest first) with date, store, items,
 
 The **Profile** tab shows your name, Student/Staff ID, email, phone and faculty, plus some statistics.
 
+**Edit profile** – change your name, phone number or faculty, then tap **Save**. (Your email and ID can't be changed.)
+
 **Saved delivery locations** (e.g. "My Lab – Building B, Room 204"):
 - **+ Add** – enter a name, choose the building and type the room, then **Save**
 - 🗑 – remove a location
 
 Saved locations appear at checkout for one-tap selection.
 
-**Log out** is at the bottom. Your cart, orders and wallet stay saved on the phone for next time.
+**Log out** is at the bottom. Your orders and wallet stay saved on the server, and your cart stays on this phone for next time.
 
 ---
 
@@ -216,15 +222,16 @@ Log in with an **admin** account (e.g. `admin@ua.edu.lb` / `admin123`). Instead 
 - **Sales** – sales today, orders today, total sales and new users in the last 7 days (cancelled orders are not counted)
 - **Orders – last 7 days** – a bar chart of orders per day
 - **Top products** and **Most active stores**
-- Tap **Refresh** to reload the numbers
+- Tap **Refresh** to reload the numbers (they are calculated by the server from every user's orders)
 
 ### Users
 - Search accounts by **name, email or ID**
 - Each account shows its role and an **Active** / **Frozen** badge
-- **Freeze** – the user can no longer log in until you tap **Unfreeze**
-- **Delete** – permanently removes the account and its wallet, cart and orders (asks for confirmation)
+- Pull the list down to refresh it
+- **Freeze** – the user can no longer log in until you tap **Unfreeze** (if they are logged in, they are logged out at their next action)
+- **Delete** – permanently removes the account with its wallet, saved locations and orders (asks for confirmation)
 - **Create new admin** – name, `@ua.edu.lb` email and password (8+ characters, letters and numbers)
-- Tap an account to open **User details**: account info, wallet balance and recent transactions, recent orders and total spent, current cart and saved locations
+- Tap an account to open **User details**: account info, wallet balance and recent transactions, recent orders and total spent, and saved locations
 
 Your own account and the main admin (`admin@ua.edu.lb`) are protected: they cannot be frozen or deleted. A normal sign-up can never create an admin.
 
@@ -244,8 +251,14 @@ Only university emails ending with `@ua.edu.lb` are accepted. Check the password
 **"This account has been frozen".**
 An administrator froze your account. Ask an admin to unfreeze it from the Admin panel.
 
-**My order status stopped moving.**
-The simulation only runs while the tracking screen is open. Open the order again from the **Orders** tab.
+**"Can't reach the CampusGo server" / "No connection".**
+The backend is not running or the phone can't reach it. Check that `npm run dev` is running in the `backend` folder, that the phone is on the same Wi-Fi as the computer, and that the Windows firewall allows port **3000**. Then tap **Try again**.
+
+**The Home screen says "Offline: showing the saved menu".**
+The app could not download the menu from the server and shows its built-in copy. Pull down on the Home screen to try again. You can't place orders until the server is reachable.
+
+**"Prices have changed" when placing an order.**
+A price changed since you added the product to your cart. Check your cart and place the order again.
 
 **The QR code doesn't connect.**
-Make sure the phone and computer are on the same Wi-Fi, or run `npx expo start --tunnel`.
+Make sure the phone and computer are on the same Wi-Fi and that the firewall allows port **8081**.

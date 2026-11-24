@@ -1,15 +1,15 @@
-import { createContext, useCallback, useContext, useMemo } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "./AuthContext";
 import { useCart } from "./CartContext";
 import { useWallet } from "./WalletContext";
-import usePersistedUserState from "../utils/usePersistedUserState";
-import { makeId } from "../utils/storage";
-import { getOrderTotals, meetsMinimumOrder, formatPrice } from "../utils/pricing";
-import { slotLabel } from "../utils/time";
-import { couriers, getStoreById, getBuildingById, settings } from "../data";
+import { getOrderTotals } from "../utils/pricing";
 
 /*
- * Orders are simulated: the status is advanced by a timer on the tracking screen.
+ * Orders, stored on the server.
+ * - placeOrder sends the cart to POST /api/orders. The server checks every
+ *   rule, recalculates the prices and takes the wallet payment.
+ * - The status moves forward on the server by itself (Received → Preparing →
+ *   On the way → Delivered); the tracking screen asks for updates.
  */
 
 export const ORDER_STATUSES = ["received", "preparing", "on_the_way", "delivered"];
@@ -23,18 +23,50 @@ export const STATUS_LABELS = {
 };
 
 const OrdersContext = createContext(null);
-const NO_ORDERS = [];
+
+// Only what the server needs from a cart line (it looks up the prices itself).
+const toOrderItem = (item) =>
+  item.type === "print"
+    ? { type: "print", storeId: item.storeId, quantity: item.quantity, printJob: item.printJob }
+    : {
+        type: "product",
+        storeId: item.storeId,
+        productId: item.productId,
+        quantity: item.quantity,
+        size: item.size ? { label: item.size.label } : null,
+        extras: (item.extras || []).map((e) => ({ label: e.label })),
+      };
 
 export function OrdersProvider({ children }) {
-  const { user } = useAuth();
+  const { user, request } = useAuth();
   const cart = useCart();
   const wallet = useWallet();
-  const [orders, setOrders, ready] = usePersistedUserState("orders", user?.id, NO_ORDERS);
+  const [orders, setOrders] = useState([]);
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState(null);
 
-  const updateOrder = useCallback(
-    (id, changes) => setOrders((list) => list.map((o) => (o.id === id ? { ...o, ...changes } : o))),
-    [setOrders]
+  // Replaces one order in the list (or adds it at the top).
+  const putOrder = useCallback(
+    (order) =>
+      setOrders((list) => (list.some((o) => o.id === order.id) ? list.map((o) => (o.id === order.id ? order : o)) : [order, ...list])),
+    []
   );
+
+  const refresh = useCallback(async () => {
+    const { data, error: loadError } = await request("/orders");
+    if (data) setOrders(data.orders);
+    setError(loadError || null);
+    setReady(true);
+    return { error: loadError };
+  }, [request]);
+
+  // Load the orders when a (non-admin) user logs in; clear them on logout.
+  const userId = user?.role === "user" ? user.id : null;
+  useEffect(() => {
+    setOrders([]);
+    setReady(false);
+    if (userId) refresh();
+  }, [userId, refresh]);
 
   /**
    * Turns the current cart into an order.
@@ -42,93 +74,69 @@ export function OrdersProvider({ children }) {
    * Returns { order } or { error }.
    */
   const placeOrder = useCallback(
-    ({ buildingId, room, slot, paymentMethod }) => {
+    async ({ buildingId, room, slot, paymentMethod }) => {
       if (cart.items.length === 0) return { error: "Your cart is empty." };
-      if (!meetsMinimumOrder(cart.subtotal)) {
-        return { error: `Minimum order is ${formatPrice(settings.minimumOrder)}.` };
-      }
-      if (!buildingId) return { error: "Please choose a building." };
-      if (!room || !room.trim()) return { error: "Please enter the room number." };
-      if (!slot) return { error: "Please choose a delivery time." };
-
-      const store = getStoreById(cart.storeId);
-      const totals = getOrderTotals(cart.subtotal);
-      const id = makeId();
-
-      if (paymentMethod === "wallet") {
-        const result = wallet.pay(totals.total, `Order at ${store.name}`);
-        if (result.error) return { error: result.error };
-      }
-
-      const now = new Date().toISOString();
-      const order = {
-        id,
-        storeId: store.id,
-        storeName: store.name,
-        items: cart.items,
-        ...totals,
-        buildingId,
-        buildingName: getBuildingById(buildingId)?.name,
-        room: room.trim(),
-        slotId: slot.id,
-        slotLabel: slotLabel(slot),
-        paymentMethod,
-        courier: couriers[Math.floor(Math.random() * couriers.length)],
-        status: "received",
-        statusTimes: { received: now },
-        createdAt: now,
-        rating: null,
-      };
-
-      setOrders((list) => [order, ...list]);
+      const { data, error: placeError } = await request("/orders", {
+        method: "POST",
+        body: {
+          items: cart.items.map(toOrderItem),
+          buildingId,
+          room: room.trim(),
+          slotId: slot?.id,
+          paymentMethod,
+          // The total shown to the user: the server refuses the order if the real total is different.
+          expectedTotal: getOrderTotals(cart.subtotal).total,
+        },
+      });
+      if (placeError) return { error: placeError };
+      putOrder(data.order);
       cart.clearCart();
-      return { order };
+      wallet.refresh(); // new balance + "payment" transaction
+      return { order: data.order };
     },
-    [cart, wallet, setOrders]
+    [cart, wallet, request, putOrder]
   );
 
-  // Moves an order to its next status (used by the tracking timer).
-  const advanceStatus = useCallback(
-    (id) => {
-      setOrders((list) =>
-        list.map((o) => {
-          const index = ORDER_STATUSES.indexOf(o.status);
-          if (o.id !== id || index === -1 || index === ORDER_STATUSES.length - 1) return o;
-          const next = ORDER_STATUSES[index + 1];
-          return { ...o, status: next, statusTimes: { ...o.statusTimes, [next]: new Date().toISOString() } };
-        })
-      );
+  // Asks the server for the latest version of one order (used by the tracking screen).
+  const refreshOrder = useCallback(
+    async (id) => {
+      const { data, error: loadError } = await request(`/orders/${id}`);
+      if (data) putOrder(data.order);
+      return { error: loadError };
     },
-    [setOrders]
+    [request, putOrder]
   );
 
   // Only allowed while the order is still "received". Wallet payments are refunded.
   const cancelOrder = useCallback(
-    (id) => {
-      const order = orders.find((o) => o.id === id);
-      if (!order || order.status !== "received") {
-        return { error: "This order can no longer be cancelled." };
+    async (id) => {
+      const { data, error: cancelError } = await request(`/orders/${id}/cancel`, { method: "POST" });
+      if (cancelError) {
+        refreshOrder(id); // show the real status (e.g. it is already being prepared)
+        return { error: cancelError };
       }
-      if (order.paymentMethod === "wallet") wallet.refund(order.total, `Refund – ${order.storeName}`);
-      updateOrder(id, {
-        status: "cancelled",
-        statusTimes: { ...order.statusTimes, cancelled: new Date().toISOString() },
-      });
+      putOrder(data.order);
+      wallet.refresh(); // "refund" transaction
       return { error: null };
     },
-    [orders, wallet, updateOrder]
+    [request, putOrder, refreshOrder, wallet]
   );
 
   const rateOrder = useCallback(
-    (id, stars, comment) => updateOrder(id, { rating: { stars, comment: comment.trim() } }),
-    [updateOrder]
+    async (id, stars, comment) => {
+      const { data, error: rateError } = await request(`/orders/${id}/rate`, { method: "POST", body: { stars, comment } });
+      if (rateError) return { error: rateError };
+      putOrder(data.order);
+      return { error: null };
+    },
+    [request, putOrder]
   );
 
   const getOrder = useCallback((id) => orders.find((o) => o.id === id), [orders]);
 
   const value = useMemo(
-    () => ({ orders, ready, placeOrder, advanceStatus, cancelOrder, rateOrder, getOrder }),
-    [orders, ready, placeOrder, advanceStatus, cancelOrder, rateOrder, getOrder]
+    () => ({ orders, ready, error, refresh, placeOrder, refreshOrder, cancelOrder, rateOrder, getOrder }),
+    [orders, ready, error, refresh, placeOrder, refreshOrder, cancelOrder, rateOrder, getOrder]
   );
 
   return <OrdersContext.Provider value={value}>{children}</OrdersContext.Provider>;

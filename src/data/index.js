@@ -1,15 +1,42 @@
-// Single entry point for the mock data (acts like a tiny local "API").
+// Single entry point for the catalog (stores, products, buildings, slots, prices).
+//
+// The app starts with the copy bundled in campus.json, then CatalogContext
+// downloads the real catalog from the server (GET /api/catalog) and calls
+// applyCatalog(). The arrays/objects below are UPDATED IN PLACE, so every
+// screen that imported them automatically sees the server's data.
+// If the server can't be reached, the bundled copy keeps the app usable.
 import data from "./campus.json";
 
-export const settings = data.settings;
-export const stores = data.stores;
-export const products = data.products;
-export const buildings = data.buildings;
-export const deliverySlots = data.deliverySlots;
-export const printPricing = data.printPricing;
-export const couriers = data.couriers;
+export const settings = { ...data.settings };
+export const stores = [...data.stores];
+export const products = [...data.products];
+export const buildings = [...data.buildings];
+export const deliverySlots = [...data.deliverySlots];
+export const printPricing = { ...data.printPricing };
 
-export const STORE_CATEGORIES = ["All", ...new Set(stores.map((s) => s.category))];
+export const STORE_CATEGORIES = [];
+
+const replaceArray = (target, items) => target.splice(0, target.length, ...items);
+const replaceObject = (target, values) => {
+  Object.keys(target).forEach((key) => delete target[key]);
+  Object.assign(target, values);
+};
+
+function updateCategories() {
+  replaceArray(STORE_CATEGORIES, ["All", ...new Set(stores.map((s) => s.category))]);
+}
+updateCategories();
+
+// Replaces the bundled data with the catalog received from the server.
+export function applyCatalog(catalog) {
+  replaceObject(settings, catalog.settings);
+  replaceObject(printPricing, catalog.printPricing);
+  replaceArray(stores, catalog.stores);
+  replaceArray(products, catalog.products);
+  replaceArray(buildings, catalog.buildings);
+  replaceArray(deliverySlots, catalog.deliverySlots);
+  updateCategories();
+}
 
 export const getStoreById = (id) => stores.find((s) => s.id === id);
 export const getProductById = (id) => products.find((p) => p.id === id);

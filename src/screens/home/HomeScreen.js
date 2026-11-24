@@ -6,6 +6,7 @@ import Chip from "../../components/Chip";
 import EmptyState from "../../components/EmptyState";
 import { useAuth } from "../../context/AuthContext";
 import { useWallet } from "../../context/WalletContext";
+import { useCatalog } from "../../context/CatalogContext";
 import { stores, products, deliverySlots, settings, STORE_CATEGORIES } from "../../data";
 import { getStoreStatus, getNextAvailableSlot, slotLabel } from "../../utils/time";
 import { formatPrice } from "../../utils/pricing";
@@ -22,18 +23,29 @@ function matchesSearch(store, query) {
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
-  const { balance } = useWallet();
+  const { balance, ready: walletReady, refresh: refreshWallet } = useWallet();
+  const { offline, version, refreshCatalog } = useCatalog();
   const now = useNow(); // re-renders every 30 s so badges stay live
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Pull down to reload the catalog (stores, stock, prices) and the wallet from the server.
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([refreshCatalog(), refreshWallet()]);
+    setRefreshing(false);
+  };
 
   // Stores with their live status; open stores first.
+  // `version` changes when a new catalog arrives from the server.
   const storesWithStatus = useMemo(
     () =>
       stores
         .map((store) => ({ store, status: getStoreStatus(store, now) }))
         .sort((a, b) => Number(b.status.open) - Number(a.status.open)),
-    [now]
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [now, version]
   );
 
   const visibleStores = storesWithStatus.filter(
@@ -59,6 +71,13 @@ export default function HomeScreen({ navigation }) {
       <Text style={styles.greeting}>Hi {firstName} 👋</Text>
       <Text style={styles.subGreeting}>What do you need before your next class?</Text>
 
+      {offline ? (
+        <View style={styles.offline}>
+          <Ionicons name="cloud-offline-outline" size={18} color={colors.danger} />
+          <Text style={styles.offlineText}>Offline: showing the saved menu. Pull down to try again.</Text>
+        </View>
+      ) : null}
+
       {/* Banner: next delivery slot + wallet balance */}
       <View style={styles.banner}>
         <View style={styles.bannerItem}>
@@ -78,7 +97,7 @@ export default function HomeScreen({ navigation }) {
           <Ionicons name="wallet-outline" size={22} color={colors.white} />
           <View style={styles.bannerTextBox}>
             <Text style={styles.bannerLabel}>Wallet</Text>
-            <Text style={styles.bannerValue}>{formatPrice(balance)}</Text>
+            <Text style={styles.bannerValue}>{walletReady ? formatPrice(balance) : "…"}</Text>
           </View>
         </Pressable>
       </View>
@@ -124,6 +143,8 @@ export default function HomeScreen({ navigation }) {
       contentContainerStyle={styles.content}
       data={visibleStores}
       keyExtractor={(item) => item.store.id}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       ListHeaderComponent={header}
       keyboardShouldPersistTaps="handled"
       renderItem={({ item }) => (
@@ -144,6 +165,15 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xl },
   greeting: { fontSize: 24, fontWeight: "800", color: colors.text },
+  offline: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.dangerLight,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    marginTop: spacing.md,
+  },
+  offlineText: { color: colors.danger, marginLeft: spacing.sm, flex: 1, fontSize: 13 },
   subGreeting: { color: colors.textMuted, marginTop: 2, marginBottom: spacing.lg },
   banner: {
     flexDirection: "row",

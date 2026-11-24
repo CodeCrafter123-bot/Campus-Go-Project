@@ -3,6 +3,7 @@ import EmptyState from "../components/EmptyState";
 import Button from "../components/Button";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { useAuth } from "../context/AuthContext";
+import { useCatalog } from "../context/CatalogContext";
 import { colors } from "../theme/colors";
 import { stackScreenOptions } from "./stacks";
 import MainTabs from "./MainTabs";
@@ -21,8 +22,10 @@ const Stack = createNativeStackNavigator();
 // Logging in/out switches automatically – no manual navigation needed.
 export default function RootNavigator() {
   const { user, booting, connectionError, retryConnection } = useAuth();
+  const { ready: catalogReady } = useCatalog();
 
-  if (booting) {
+  // Wait for the saved login AND the catalog download.
+  if (booting || !catalogReady) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: colors.background }}>
         <ActivityIndicator size="large" color={colors.primary} />

@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { View, Text, FlatList, Pressable, StyleSheet } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "@react-navigation/native";
 import Chip from "../../components/Chip";
 import EmptyState from "../../components/EmptyState";
 import StarRating from "../../components/StarRating";
@@ -34,10 +35,27 @@ const matchesStatus = (order, filter) => {
 };
 
 export default function OrdersHistoryScreen({ navigation }) {
-  const { orders } = useOrders();
+  const { orders, refresh } = useOrders();
   const cart = useCart();
   const [storeFilter, setStoreFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Reload the orders from the server every time this tab is opened
+  // (statuses keep moving on the server even when the app is closed).
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
+
+  // Pull down to refresh.
+  const onRefresh = async () => {
+    setRefreshing(true);
+    const { error } = await refresh();
+    setRefreshing(false);
+    if (error) showAlert("Could not refresh", error);
+  };
 
   const visible = orders.filter(
     (o) => (storeFilter === "all" || o.storeId === storeFilter) && matchesStatus(o, statusFilter)
@@ -113,6 +131,8 @@ export default function OrdersHistoryScreen({ navigation }) {
       contentContainerStyle={styles.content}
       data={visible}
       keyExtractor={(o) => o.id}
+      refreshing={refreshing}
+      onRefresh={onRefresh}
       ListHeaderComponent={header}
       ListEmptyComponent={<EmptyState title="No matching orders" message="Try another filter." />}
       renderItem={({ item }) => (

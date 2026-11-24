@@ -23,6 +23,7 @@ export default function WalletScreen() {
   const { balance, transactions, topUp } = useWallet();
   const [amount, setAmount] = useState("");
   const [error, setError] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   // Allow digits and one decimal point, max 2 decimals.
   const onChangeAmount = (text) => {
@@ -48,8 +49,10 @@ export default function WalletScreen() {
       { text: "Cancel", style: "cancel" },
       {
         text: "Pay",
-        onPress: () => {
-          const result = topUp(value);
+        onPress: async () => {
+          setSaving(true);
+          const result = await topUp(value); // POST /api/wallet/topup
+          setSaving(false);
           if (result.error) {
             setError(result.error);
             return;
@@ -94,7 +97,7 @@ export default function WalletScreen() {
           hint="Maximum $500 per top-up (simulated card payment)"
           style={styles.amountField}
         />
-        <Button title={`Top up ${amount ? formatPrice(Number(amount)) : ""}`} icon="add-circle-outline" onPress={handleTopUp} />
+        <Button title={`Top up ${amount ? formatPrice(Number(amount)) : ""}`} icon="add-circle-outline" onPress={handleTopUp} loading={saving} />
       </View>
 
       <Text style={styles.sectionTitle}>Transactions</Text>
