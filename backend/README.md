@@ -41,6 +41,11 @@ Routes marked 🔒 need the login token in a header:
 | GET | `/api/stores` | Stores with their live open/closed status |
 | GET | `/api/stores/:storeId` | One store, its status and its products |
 | GET | `/api/products/:productId` | One product with its sizes and extras |
+| GET 🔒 | `/api/wallet` | Balance and transactions (newest first) |
+| POST 🔒 | `/api/wallet/topup` | Simulated card top-up `{ amount }` (more than $0, at most $500) |
+| GET 🔒 | `/api/locations` | Your saved delivery locations |
+| POST 🔒 | `/api/locations` | Save a location `{ label, buildingId, room }` |
+| DELETE 🔒 | `/api/locations/:locationId` | Remove one of your saved locations |
 
 Logging out only needs the app to forget its token.
 
@@ -52,6 +57,10 @@ Logging out only needs the app to forget its token.
 - Every input is validated again on the server (`lib/validation.js`).
 - SQL queries use **parameters** (`?`), never string concatenation, so SQL injection is not possible.
 - Frozen accounts are refused on every request, not only at login.
+- A user can only see and change **their own** wallet, locations and orders
+  (every query filters by the user id taken from the token, never from the request).
+- A wallet payment checks and changes the balance in **one SQL statement**, so two
+  payments at the same moment can never make the balance negative.
 
 ## Folder structure
 
@@ -63,7 +72,9 @@ backend/
 │   │   ├── auth/       # signup, login, me
 │   │   ├── catalog/    # whole catalog in one request
 │   │   ├── stores/     # stores and one store's menu
-│   │   └── products/   # one product
+│   │   ├── products/   # one product
+│   │   ├── wallet/     # balance, transactions, top-up
+│   │   └── locations/  # saved delivery locations
 │   └── page.js         # small info page
 ├── data/
 │   └── campus.json     # seed data (copied into the database on first run)
@@ -75,6 +86,7 @@ backend/
     ├── password.js     # password hashing (scrypt)
     ├── time.js         # opening hours and delivery-slot rules (same as the app)
     ├── token.js        # login tokens (JWT)
-    └── validation.js   # input rules (same as the app)
+    ├── validation.js   # input rules (same as the app)
+    └── wallet.js       # balance changes and transactions
 proxy.js                # CORS, so the web version of the app can call the API
 ```
